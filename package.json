@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "cors": "^2.8.3",
+    "exit-hook": "^1.1.1",
     "express": "^4.15.3",
     "knex": "^0.13.0",
     "moment": "^2.18.1",

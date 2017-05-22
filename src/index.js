@@ -4,44 +4,45 @@
  */
 'use strict'
 
-const mysql = require('mysql')
-
+const db = require('./db')
 const logger = require('./support/logging')
+const exitHook = require('exit-hook')
 
-logger.debug('Connecting to mysql database.')
+logger.debug('Starting analytics engine.')
 
-var connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'spdzuser_bank',
-  password: 'bankpassword',
-  database: 'acmebank'
-})
+// Array of table names with columns
+let schemas = undefined
 
-connection.query('SHOW TABLES', function(error, results) {
-  if (error) throw error
+const bankConnection = db.initConnection(
+  'localhost',
+  'spdzuser_bank',
+  'bankpassword',
+  'acmebank'
+)
 
-  results.map(value => {
-    for (const key of Object.keys(value)) {
-      connection.query(`SHOW COLUMNS from ${value[key]}`, function(
-        error,
-        results
-      ) {
-        if (error) throw error
+const insConnection = db.initConnection(
+  'localhost',
+  'spdzuser_ins',
+  'inspassword',
+  'acmeinsurance'
+)
 
-        logger.info(`Columns for ${value[key]}: `)
-        results.map(value => logger.info(value))
-      })
-    }
+// At startup read for the database schemas
+Promise.all([db.querySchema(bankConnection), db.querySchema(insConnection)])
+  .then(allDbColumns => {
+    schemas = [].concat.apply([], allDbColumns)
+    schemas.map(table => logger.info(table))
   })
-})
-
-setTimeout(() => {
-  connection.end(function(err) {
-    if (err) {
-      logger.warn('error connecting: ' + err.stack)
-      return
-    }
-
-    logger.info('ended connection')
+  .catch(err => {
+    logger.warn(`Unable to read schema at startup, ${err.message}.`)
+    logger.debug(err)
+    db.endConnection(bankConnection)
+    db.endConnection(insConnection)
   })
-}, 1000)
+
+// Shutdown
+exitHook(() => {
+  logger.info('Shutting down database connections.')
+  db.endConnection(bankConnection)
+  db.endConnection(insConnection)
+})

@@ -1,11 +1,12 @@
 #==================================
+# Run as root
 # Imaginary bank private schema 
 #==================================
-drop database if exists acmeBank;
+drop database if exists acmebank;
 
-create database acmeBank;
+create database acmebank;
 
-use acmeBank;
+use acmebank;
 
 drop table if exists salary;
 create table salary (
@@ -57,7 +58,7 @@ grant select on v_salary to 'spdzuser_bank'@'172.17.0.%' ;
 
 grant select on v_cyberFraud to 'spdzuser_bank'@'172.17.0.%' ;
 
-
+commit;
 
 
 
