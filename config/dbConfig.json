@@ -1,0 +1,6 @@
+{
+  "host": "localhost",
+  "user": "spdzuser_bank",
+  "password": "bankpassword",
+  "database": "acmebank"
+}

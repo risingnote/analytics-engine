@@ -1,48 +1,36 @@
 /**
- * Run a web server to allow an http client to receive and send data to a SPDZ engine.
- * Deploy behind nginx reverse proxy to support SSL connections.
+ * Run a service in front of a database to:
+ *  - serve the database schema and available spdz analytic functions to a client.
+ *  - receive and execute a query
+ *  - share the results between spdz engines 
+ *  - receive the result and send to the client
  */
 'use strict'
 
 const db = require('./db')
+const spdz = require('./spdz')
+const userInteraction = require('./userInteraction')
+
+const dbConfig = require('../config/dbConfig')
 const logger = require('./support/logging')
-const exitHook = require('exit-hook')
 
-logger.debug('Starting analytics engine.')
+logger.info('Starting analytics engine.')
 
-// Array of table names with columns
-let schemas = undefined
+// At startup init database connection
+db.initConnection(dbConfig)
+// At startup connect to SPDZ proxies
+spdz.connectToProxies()
 
-const bankConnection = db.initConnection(
-  'localhost',
-  'spdzuser_bank',
-  'bankpassword',
-  'acmebank'
-)
-
-const insConnection = db.initConnection(
-  'localhost',
-  'spdzuser_ins',
-  'inspassword',
-  'acmeinsurance'
-)
-
-// At startup read for the database schemas
-Promise.all([db.querySchema(bankConnection), db.querySchema(insConnection)])
-  .then(allDbColumns => {
-    schemas = [].concat.apply([], allDbColumns)
-    schemas.map(table => logger.info(table))
+//Simulate receiving client http query, respond once sent to SPDZ
+//Client then makes websocket looking for results/status update ?
+//how to identify client ??
+// - or client makes websocket connection and then sends...
+setTimeout(() => {
+  const query = 'select salary from v_salary'
+  const analyticFunc = 1
+  userInteraction(query, analyticFunc).catch(err => {
+    logger.warn(
+      `Unable to run analytics query ${query}, because ${err.message}`
+    )
   })
-  .catch(err => {
-    logger.warn(`Unable to read schema at startup, ${err.message}.`)
-    logger.debug(err)
-    db.endConnection(bankConnection)
-    db.endConnection(insConnection)
-  })
-
-// Shutdown
-exitHook(() => {
-  logger.info('Shutting down database connections.')
-  db.endConnection(bankConnection)
-  db.endConnection(insConnection)
-})
+}, 1000)
