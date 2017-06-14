@@ -19,15 +19,22 @@ logger.info('Starting analytics engine.')
 // At startup init database connection
 db.initConnection(dbConfig)
 // At startup connect to SPDZ proxies
-spdz.connectToProxies()
+spdz
+  .connectToProxies()
+  .then(() => {
+    logger.info('Connected successfully to SPDZ engines.')
+  })
+  .catch(err => {
+    logger.warn('Unable to connect to SPDZ engines.', err)
+  })
 
 //Simulate receiving client http query, respond once sent to SPDZ
 //Client then makes websocket looking for results/status update ?
 //how to identify client ??
 // - or client makes websocket connection and then sends...
 setTimeout(() => {
-  const query = 'select salary from v_salary'
-  const analyticFunc = 1
+  const query = 'select sum(salary), count(salary) from v_salary'
+  const analyticFunc = 'avg'
   userInteraction(query, analyticFunc).catch(err => {
     logger.warn(
       `Unable to run analytics query ${query}, because ${err.message}`

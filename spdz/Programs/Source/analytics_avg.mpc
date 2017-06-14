@@ -1,0 +1,113 @@
+"""
+First, simple standalone analytics function to calculate average from 2 client inputs.
+"""
+
+from Compiler.types import Array, Matrix, sint, regint, sfix, MemValue, ClientMessageType
+from Compiler.instructions import listen, acceptclientconnection
+from Compiler.library import do_while, if_e, else_, print_ln
+from Compiler.util import if_else
+
+PORTNUM = 14000
+NUM_CLIENTS = 2
+CLIENT_PUBLIC_KEYS = [
+    '0ae03219cce4cfaaa30d014b92b41a106ff6dd039f0040504d02f18f1985d149',
+    '0ae03219cce4cfaaa30d014b92b41a106ff6dd039f0040504d02f18f1985d149'
+]
+
+program.set_bit_length(32)
+
+
+def reformat_public_key(key_hex):
+    """Convert authorised public key from hex string into list of 8 signed 32 bit ints,
+       ready for later validation."""
+    public_key_list = [key_hex[i:i + 8] for i in range(0, len(key_hex), 8)]
+
+    def hex_to_signed(hex_int):
+        int_val = int(hex_int, 16)
+        if int_val > 0x7FFFFFFF:
+            int_val -= 0x100000000
+        return int_val
+
+    return map(hex_to_signed, public_key_list)
+
+
+def validate_client_connection(public_key, auth_public_key_ints):
+    """Compare public_key against a valid key, return 1 for good, 0 for bad."""
+    validation_count = 0
+
+    for index, keypart in enumerate(public_key):
+        matches = keypart == auth_public_key_ints[index]
+        validation_count += if_else(matches, 1, 0)
+
+    return validation_count == 8
+
+
+def connectClients():
+    """Wait until 2 valid (based on public key) clients have connected."""
+    client_sockets = Array(NUM_CLIENTS, regint)
+    number_clients = MemValue(regint(0))
+
+    valid_public_key_list = [
+        reformat_public_key(key_string) for key_string in CLIENT_PUBLIC_KEYS
+    ]
+
+    @do_while
+    def client_connection():
+        client_socket_id = regint()
+        acceptclientconnection(client_socket_id, PORTNUM)
+        public_key = regint.read_client_public_key(client_socket_id)
+        valid = sum([
+            validate_client_connection(public_key, valid_public_key)
+            for valid_public_key in valid_public_key_list
+        ])
+
+        @if_e(valid != 1)
+        def invalid_client():
+            print_ln('Validation of connecting client public key failed.')
+
+        @else_
+        def valid_client():
+            number_clients.write(number_clients + 1)
+            client_sockets[number_clients] = client_socket_id
+
+        return number_clients < NUM_CLIENTS
+
+    return client_sockets
+
+
+def main():
+
+    listen(PORTNUM)
+    print_ln('Listening for client connections on base port %s', PORTNUM)
+
+    client_sockets = connectClients()
+
+    @do_while
+    def calc_loop():
+        print_ln('Starting a new avg calculation.')
+
+        # Clients secret input - 2 clients each providing sum and cnt.
+        client_values = Matrix(2, 2, sint)
+
+        for i in range(NUM_CLIENTS):
+            input_share = sint.receive_from_client(
+                2, client_sockets[i], ClientMessageType.InputTriple)
+            client_values[i][0] = input_share[0]
+            client_values[i][1] = input_share[1]
+
+        # do calc
+        sum_float = sfix()
+        sum_float.load_int(client_values[0][0] + client_values[1][0])
+        cnt_float = sfix()
+        cnt_float.load_int(client_values[0][1] + client_values[1][1])
+
+        print_ln('Total %s, count %s, avg %s.',
+                 sum_float.reveal(),
+                 cnt_float.reveal(), (sum_float / cnt_float).reveal())
+
+        # todo return to clients (needs sfix instruction and authenticated way to return shares of results)
+
+        return 1
+
+
+main()

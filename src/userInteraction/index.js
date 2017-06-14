@@ -6,7 +6,9 @@ const processUserRequest = (query, analyticFunc) => {
   return db
     .runQuery(query, true)
     .then(results => {
-      logger.debug(results)
+      logger.debug(
+        `Run query with limit "${query}" returned results ${JSON.stringify(results)}.`
+      )
       if (spdz.verifyQuery(Object.keys(results[0]).length, analyticFunc)) {
         return db.runQuery(query, false)
       } else {
@@ -18,7 +20,7 @@ const processUserRequest = (query, analyticFunc) => {
       }
     })
     .then(data => {
-      logger.debug(data)
+      logger.debug(`Run full query returned data ${JSON.stringify(data)}.`)
     })
 }
 

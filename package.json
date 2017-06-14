@@ -36,6 +36,7 @@
     "knex": "^0.13.0",
     "moment": "^2.18.1",
     "mysql": "^2.13.0",
+    "spdz-gui-lib": "file:///Users/je0018/Development/spdz-gui-lib",
     "winston": "^2.3.1"
   }
 }
