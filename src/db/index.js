@@ -54,7 +54,8 @@ const runQuery = (sqlQuery, limit = false) => {
   return dbConnection
     .raw(sqlQuery + (limit ? ' limit 1' : ''))
     .then(results => {
-      return results['0']
+      // TODO are results always in matrix first element ?
+      return results[0][0]
     })
 }
 

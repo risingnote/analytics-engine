@@ -8,10 +8,10 @@ from Compiler.library import do_while, if_e, else_, print_ln
 from Compiler.util import if_else
 
 PORTNUM = 14000
-NUM_CLIENTS = 2
+NUM_CLIENTS = 1
 CLIENT_PUBLIC_KEYS = [
     '0ae03219cce4cfaaa30d014b92b41a106ff6dd039f0040504d02f18f1985d149',
-    '0ae03219cce4cfaaa30d014b92b41a106ff6dd039f0040504d02f18f1985d149'
+    '0000000000000000000000000000000000000000000000000000000000000000'
 ]
 
 program.set_bit_length(32)
@@ -54,6 +54,7 @@ def connectClients():
     @do_while
     def client_connection():
         client_socket_id = regint()
+        print_ln('Waiting for client connection...')
         acceptclientconnection(client_socket_id, PORTNUM)
         public_key = regint.read_client_public_key(client_socket_id)
         valid = sum([
@@ -67,8 +68,12 @@ def connectClients():
 
         @else_
         def valid_client():
-            number_clients.write(number_clients + 1)
             client_sockets[number_clients] = client_socket_id
+
+            number_clients.write(number_clients + 1)
+            print_ln(
+                'Validation of connecting client public key succeeded, client count is %s.',
+                number_clients)
 
         return number_clients < NUM_CLIENTS
 
@@ -82,24 +87,28 @@ def main():
 
     client_sockets = connectClients()
 
+    sfix.set_precision(8, 41)
+
     @do_while
     def calc_loop():
         print_ln('Starting a new avg calculation.')
 
-        # Clients secret input - 2 clients each providing sum and cnt.
-        client_values = Matrix(2, 2, sint)
+        # Clients secret input - sum and cnt.
+        accumulator = Array(2, sint)
 
         for i in range(NUM_CLIENTS):
             input_share = sint.receive_from_client(
                 2, client_sockets[i], ClientMessageType.InputTriple)
-            client_values[i][0] = input_share[0]
-            client_values[i][1] = input_share[1]
+            accumulator[0] = accumulator[0] + input_share[0]
+            accumulator[1] = accumulator[1] + input_share[1]
+            print_ln('Current total %s count %s from clients.',
+                     accumulator[0].reveal(), accumulator[1].reveal())
 
         # do calc
         sum_float = sfix()
-        sum_float.load_int(client_values[0][0] + client_values[1][0])
+        sum_float.load_int(accumulator[0])
         cnt_float = sfix()
-        cnt_float.load_int(client_values[0][1] + client_values[1][1])
+        cnt_float.load_int(accumulator[1])
 
         print_ln('Total %s, count %s, avg %s.',
                  sum_float.reveal(),

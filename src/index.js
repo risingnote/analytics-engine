@@ -18,6 +18,7 @@ logger.info('Starting analytics engine.')
 
 // At startup init database connection
 db.initConnection(dbConfig)
+
 // At startup connect to SPDZ proxies
 spdz
   .connectToProxies()
@@ -35,9 +36,16 @@ spdz
 setTimeout(() => {
   const query = 'select sum(salary), count(salary) from v_salary'
   const analyticFunc = 'avg'
-  userInteraction(query, analyticFunc).catch(err => {
-    logger.warn(
-      `Unable to run analytics query ${query}, because ${err.message}`
-    )
-  })
-}, 1000)
+  userInteraction(query, analyticFunc)
+    .then(inputs => {
+      return spdz.sendInputs(inputs)
+    })
+    .then(() => {
+      logger.info('Inputs sent to SPDZ.')
+    })
+    .catch(err => {
+      logger.warn(
+        `Unable to run analytics query ${query}, because ${err.message}`
+      )
+    })
+}, 2000)
