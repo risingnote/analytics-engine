@@ -19,20 +19,24 @@ logger.info('Starting analytics engine.')
 // At startup init database connection
 db.initConnection(dbConfig)
 
-// At startup connect to SPDZ proxies
+// At startup connect to SPDZ proxies, what about reconnects?
 spdz
   .connectToProxies()
-  .then(() => {
+  .then(streams => {
     logger.info('Connected successfully to SPDZ engines.')
+    const [spdzResultStream, spdzErrorStream] = streams
+    spdzResultStream.onValue(valueList => {
+      logger.info('SPDZ outputs message.', valueList)
+    })
+    spdzErrorStream.onError(err => {
+      logger.warn('SPDZ err message.', err)
+    })
   })
   .catch(err => {
-    logger.warn('Unable to connect to SPDZ engines.', err)
+    logger.warn(`Unable to connect to SPDZ engines because ${err.message}.`)
   })
 
-//Simulate receiving client http query, respond once sent to SPDZ
-//Client then makes websocket looking for results/status update ?
-//how to identify client ??
-// - or client makes websocket connection and then sends...
+//Simulate receiving client query
 setTimeout(() => {
   const query = 'select sum(salary), count(salary) from v_salary'
   const analyticFunc = 'avg'
@@ -41,7 +45,7 @@ setTimeout(() => {
       return spdz.sendInputs(inputs)
     })
     .then(() => {
-      logger.info('Inputs sent to SPDZ.')
+      logger.debug('Inputs sent to SPDZ.')
     })
     .catch(err => {
       logger.warn(

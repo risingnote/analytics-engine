@@ -2,7 +2,7 @@
 First, simple standalone analytics function to calculate average from 2 client inputs.
 """
 
-from Compiler.types import Array, Matrix, sint, regint, sfix, MemValue, ClientMessageType
+from Compiler.types import Array, sint, regint, sfix, cfix, MemValue, ClientMessageType
 from Compiler.instructions import listen, acceptclientconnection
 from Compiler.library import do_while, if_e, else_, print_ln
 from Compiler.util import if_else
@@ -23,6 +23,7 @@ def reformat_public_key(key_hex):
     public_key_list = [key_hex[i:i + 8] for i in range(0, len(key_hex), 8)]
 
     def hex_to_signed(hex_int):
+        """Convert hex byte into signed int"""
         int_val = int(hex_int, 16)
         if int_val > 0x7FFFFFFF:
             int_val -= 0x100000000
@@ -87,7 +88,8 @@ def main():
 
     client_sockets = connectClients()
 
-    sfix.set_precision(8, 41)
+    sfix.set_precision(10, 41)
+    cfix.set_precision(10, 41)
 
     @do_while
     def calc_loop():
@@ -98,7 +100,7 @@ def main():
 
         for i in range(NUM_CLIENTS):
             input_share = sint.receive_from_client(
-                2, client_sockets[i], ClientMessageType.InputTriple)
+                2, client_sockets[i], ClientMessageType.TripleShares)
             accumulator[0] = accumulator[0] + input_share[0]
             accumulator[1] = accumulator[1] + input_share[1]
             print_ln('Current total %s count %s from clients.',
@@ -110,11 +112,16 @@ def main():
         cnt_float = sfix()
         cnt_float.load_int(accumulator[1])
 
-        print_ln('Total %s, count %s, avg %s.',
-                 sum_float.reveal(),
-                 cnt_float.reveal(), (sum_float / cnt_float).reveal())
+        results = Array(1, cfix)
+        sresult = sum_float / cnt_float
+        results[0] = sresult.reveal()
 
-        # todo return to clients (needs sfix instruction and authenticated way to return shares of results)
+        print_ln('Total %s, count %s, avg %s.',
+                 sum_float.reveal(), cnt_float.reveal(), results[0])
+
+        for i in range(NUM_CLIENTS):
+            cfix.write_to_socket(client_sockets[i], results,
+                                 ClientMessageType.ClearModpFix, True)
 
         return 1
 
