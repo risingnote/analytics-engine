@@ -1,6 +1,6 @@
 const spdzGuiLib = require('spdz-gui-lib')
-const exitHook = require('exit-hook')
 
+const exitHook = require('../support/exitHook')
 const logger = require('../support/logging')
 const analFuncs = require('./functions')
 const proxyConfig = require('../../config/spdzProxy')
@@ -33,10 +33,14 @@ const verifyQuery = (colCount, functionId) => {
   )
 }
 
-// Shutdown
 exitHook(() => {
-  logger.info('Closing SPDZ connections....(to be implemented)')
-  // socketApi.disconnectFromSpdz()
+  logger.info('Shutting down SPDZ connections...')
+  spdzGuiLib
+    .disconnectFromSpdzPromise()
+    .then(() => logger.info('Disconnected from SPDZ.'))
+    .catch(err =>
+      logger.info('Problem in disconnecting from SPDZ.', err.message)
+    )
 })
 
 module.exports = {

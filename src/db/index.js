@@ -2,8 +2,8 @@
  * Provide interface to database operations.
  */
 const knexInit = require('knex')
-const exitHook = require('exit-hook')
 
+const exitHook = require('../support/exitHook')
 const logger = require('../support/logging')
 const querySchema = require('./querySchema')
 
@@ -63,16 +63,16 @@ const endConnection = connection => {
   connection
     .destroy()
     .then(() => {
-      logger.info('Ended connection.')
+      logger.info('Ended database connection.')
     })
     .catch(err => {
-      logger.warn(`Error ending connectiion, ${err.stack}.`)
+      logger.warn(`Error ending database connectiion, ${err.stack}.`)
     })
 }
 
 // Shutdown
 exitHook(() => {
-  logger.info('Shutting down database connections.')
+  logger.info('Shutting down database connections....')
   endConnection(dbConnection)
 })
 
