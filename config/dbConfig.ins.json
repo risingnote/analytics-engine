@@ -1,0 +1,6 @@
+{
+  "host": "localhost",
+  "user": "spdzuser_ins",
+  "password": "inspassword",
+  "database": "acmeinsurance"
+}

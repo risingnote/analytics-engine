@@ -8,10 +8,11 @@ from Compiler.library import do_while, if_e, else_, print_ln
 from Compiler.util import if_else
 
 PORTNUM = 14000
-NUM_CLIENTS = 1
+NUM_CLIENTS = 2
+# Order of public keys will be used to force order of client connections
 CLIENT_PUBLIC_KEYS = [
     '0ae03219cce4cfaaa30d014b92b41a106ff6dd039f0040504d02f18f1985d149',
-    '0000000000000000000000000000000000000000000000000000000000000000'
+    '242584f87e218f54299bfd1ecef97884f715f14305a5d05f78afb9bb92c7bc54'
 ]
 
 program.set_bit_length(32)
@@ -32,15 +33,28 @@ def reformat_public_key(key_hex):
     return map(hex_to_signed, public_key_list)
 
 
-def validate_client_connection(public_key, auth_public_key_ints):
-    """Compare public_key against a valid key, return 1 for good, 0 for bad."""
-    validation_count = 0
+def validate_client_connection(public_key, valid_public_key_list):
+    """Compare public_key against the list of valid keys.
+       Return position in list or -1 if not valid."""
 
-    for index, keypart in enumerate(public_key):
-        matches = keypart == auth_public_key_ints[index]
-        validation_count += if_else(matches, 1, 0)
+    def validate_public_key(test_key, valid_key):
+        """Compare each int of test_key against valid_key.
+           Returns 1 if valid, else 0."""
 
-    return validation_count == 8
+        validation_count = 0
+
+        for index, keypart in enumerate(test_key):
+            matches = keypart == valid_key[index]
+            validation_count += if_else(matches, 1, 0)
+
+        return validation_count == 8
+
+    client_posn = -1
+    for index, valid_public_key in enumerate(valid_public_key_list):
+        valid = validate_public_key(public_key, valid_public_key)
+        client_posn = if_else(valid == 1, index, client_posn)
+
+    return client_posn
 
 
 def connectClients():
@@ -54,27 +68,28 @@ def connectClients():
 
     @do_while
     def client_connection():
+        """Wait for a client to connect, validate key and put into correct slot."""
         client_socket_id = regint()
         print_ln('Waiting for client connection...')
         acceptclientconnection(client_socket_id, PORTNUM)
         public_key = regint.read_client_public_key(client_socket_id)
-        valid = sum([
-            validate_client_connection(public_key, valid_public_key)
-            for valid_public_key in valid_public_key_list
-        ])
 
-        @if_e(valid != 1)
+        # Order of clients connecting must be the same across SPDZ engines, or share distribution fails.
+        client_posn = validate_client_connection(public_key,
+                                                 valid_public_key_list)
+
+        @if_e(client_posn < 0)
         def invalid_client():
             print_ln('Validation of connecting client public key failed.')
 
         @else_
         def valid_client():
-            client_sockets[number_clients] = client_socket_id
+            client_sockets[client_posn] = client_socket_id
 
             number_clients.write(number_clients + 1)
             print_ln(
-                'Validation of connecting client public key succeeded, client count is %s.',
-                number_clients)
+                'Validation of connecting client public key succeeded, client order is %s, client count is %s.',
+                client_posn, number_clients)
 
         return number_clients < NUM_CLIENTS
 

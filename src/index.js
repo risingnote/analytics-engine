@@ -11,7 +11,12 @@ const db = require('./db')
 const spdz = require('./spdz')
 const userInteraction = require('./userInteraction')
 
-const dbConfig = require('../config/dbConfig')
+// Run time config
+const dbConfigLocation = process.env.DB_CONFIG_FILE || '../config/dbConfig'
+const dbConfig = require(dbConfigLocation)
+const dhKeyPairLocation = process.env.KEY_PAIR_FILE || '../config/dhKeyPair'
+const dhKeyPair = require(dhKeyPairLocation)
+
 const logger = require('./support/logging')
 
 logger.info('Starting analytics engine.')
@@ -21,7 +26,7 @@ db.initConnection(dbConfig)
 
 // At startup connect to SPDZ proxies, what about reconnects?
 spdz
-  .connectToProxies()
+  .connectToProxies(dhKeyPair)
   .then(streams => {
     logger.info('Connected successfully to SPDZ engines.')
     const [spdzResultStream, spdzErrorStream] = streams

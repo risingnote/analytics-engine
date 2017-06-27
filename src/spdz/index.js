@@ -4,9 +4,8 @@ const exitHook = require('../support/exitHook')
 const logger = require('../support/logging')
 const analFuncs = require('./functions')
 const proxyConfig = require('../../config/spdzProxy')
-const dhKeyPair = require('../../config/dhKeyPair-dev')
 
-const connectToProxies = () => {
+const connectToProxies = dhKeyPair => {
   spdzGuiLib.setDHKeyPair(dhKeyPair.clientPublicKey, dhKeyPair.clientPrivateKey)
   const spdzProxyList = proxyConfig.spdzProxyList.map(spdzProxy => {
     return {
