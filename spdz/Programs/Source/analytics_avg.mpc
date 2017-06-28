@@ -112,6 +112,7 @@ def main():
 
         # Clients secret input - sum and cnt.
         accumulator = Array(2, sint)
+        accumulator.assign_all(0)
 
         for i in range(NUM_CLIENTS):
             input_share = sint.receive_from_client(

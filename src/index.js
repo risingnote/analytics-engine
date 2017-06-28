@@ -58,3 +58,21 @@ setTimeout(() => {
       )
     })
 }, 2000)
+
+setTimeout(() => {
+  const query =
+    'select sum(salary), count(salary) from v_salary where salary > 10000'
+  const analyticFunc = 'avg'
+  userInteraction(query, analyticFunc)
+    .then(inputs => {
+      return spdz.sendInputs(inputs)
+    })
+    .then(() => {
+      logger.debug('Inputs sent to SPDZ.')
+    })
+    .catch(err => {
+      logger.warn(
+        `Unable to run analytics query ${query}, because ${err.message}`
+      )
+    })
+}, 5000)
