@@ -46,7 +46,7 @@ create algorithm = temptable
 drop view if exists v_cyberFraud;
 
 create algorithm = temptable
- sql security invoker
+ sql security definer
  view v_cyberFraud as select * from cyberFraud;
 
 drop user if exists 'spdzuser_bank'@'172.17.0.%' ;

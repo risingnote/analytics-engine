@@ -9,21 +9,21 @@ const processUserRequest = (query, analyticFunc) => {
       logger.debug(
         `Run query with limit "${query}" returned results ${JSON.stringify(results)}.`
       )
-      if (spdz.verifyQuery(Object.keys(results).length, analyticFunc)) {
+      try {
+        spdz.verifyQuery(Object.keys(results[0]).length, analyticFunc)
         return db.runQuery(query, false)
-      } else {
-        return Promise.reject(
-          new Error(
-            'The number of columns returned does not match the selected analytic function input.'
-          )
-        )
+      } catch (err) {
+        return Promise.reject(err)
       }
     })
     .then(data => {
       logger.debug(`Run full query returned data ${JSON.stringify(data)}.`)
-      return Object.keys(data).map(key => {
-        return data[key]
-      })
+      // Extract values from each row and flatten into 1d array.
+      const colKeys = Object.keys(data[0])
+      const matrixData = data.map(row => colKeys.map(key => row[key]))
+      const arrayData = [].concat.apply([], matrixData)
+
+      return spdz.padData(arrayData, colKeys.length, analyticFunc)
     })
 }
 

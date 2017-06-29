@@ -7,6 +7,7 @@
  */
 'use strict'
 
+const Bacon = require('baconjs').Bacon
 const db = require('./db')
 const spdz = require('./spdz')
 const userInteraction = require('./userInteraction')
@@ -21,8 +22,17 @@ const logger = require('./support/logging')
 
 logger.info('Starting analytics engine.')
 
-// At startup init database connection
-db.initConnection(dbConfig)
+// At startup init database connection and get schema
+db
+  .initConnection(dbConfig)
+  .then(schema => {
+    logger.info('Database schema is:')
+    schema.map(table => logger.info(table))
+  })
+  .catch(err => {
+    logger.warn(`Unable to read schema at startup, ${err.message}.`)
+    db.endConnection()
+  })
 
 // At startup connect to SPDZ proxies, what about reconnects?
 spdz
@@ -38,13 +48,11 @@ spdz
     })
   })
   .catch(err => {
-    logger.warn(`Unable to connect to SPDZ engines because ${err.message}.`)
+    logger.warn(`Unable to connect to SPDZ engines. ${err.message}.`)
   })
 
-//Simulate receiving client query
-setTimeout(() => {
-  const query = 'select sum(salary), count(salary) from v_salary'
-  const analyticFunc = 'avg'
+// Simulate user queries
+const userQuery = (query, analyticFunc) => {
   userInteraction(query, analyticFunc)
     .then(inputs => {
       return spdz.sendInputs(inputs)
@@ -53,26 +61,32 @@ setTimeout(() => {
       logger.debug('Inputs sent to SPDZ.')
     })
     .catch(err => {
-      logger.warn(
-        `Unable to run analytics query ${query}, because ${err.message}`
-      )
+      logger.warn(`Unable to run analytics query "${query}". ${err.message}.`)
     })
-}, 2000)
+}
 
-setTimeout(() => {
-  const query =
-    'select sum(salary), count(salary) from v_salary where salary > 10000'
-  const analyticFunc = 'avg'
-  userInteraction(query, analyticFunc)
-    .then(inputs => {
-      return spdz.sendInputs(inputs)
-    })
-    .then(() => {
-      logger.debug('Inputs sent to SPDZ.')
-    })
-    .catch(err => {
-      logger.warn(
-        `Unable to run analytics query ${query}, because ${err.message}`
-      )
-    })
-}, 5000)
+// const queries = [
+//   { query: 'select sum(salary), count(salary) from v_salary', func: 'avg' },
+//   {
+//     query: 'select sum(salary), count(salary) from v_salary where salary > 10000',
+//     func: 'avg'
+//   }
+// ]
+
+const queries = dbConfig.database === 'acmebank'
+  ? [
+    {
+      query: 'select hour(incidentDate), count(*) from v_cyberFraud group by hour(incidentDate)',
+      func: 'hist_percent'
+    }
+  ]
+  : [
+    {
+      query: 'select hour(lossDate), count(*) from v_cyberFraud group by hour(lossDate)',
+      func: 'hist_percent'
+    }
+  ]
+
+Bacon.sequentially(3000, queries).onValue(value =>
+  userQuery(value.query, value.func)
+)

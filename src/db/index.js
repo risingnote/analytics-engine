@@ -25,24 +25,18 @@ const createConnection = (host, user, password, database) => {
 }
 
 const initConnection = dbConfig => {
-  dbConnection = createConnection(
-    dbConfig.host,
-    dbConfig.user,
-    dbConfig.password,
-    dbConfig.database
-  )
+  try {
+    dbConnection = createConnection(
+      dbConfig.host,
+      dbConfig.user,
+      dbConfig.password,
+      dbConfig.database
+    )
+  } catch (err) {
+    return Promise.reject(err)
+  }
 
-  querySchema(dbConnection)
-    .then(allDbColumns => {
-      schema = allDbColumns
-      logger.info('Database schema is:')
-      schema.map(table => logger.info(table))
-    })
-    .catch(err => {
-      logger.warn(`Unable to read schema at startup, ${err.message}`)
-      logger.debug(err)
-      endConnection(dbConnection)
-    })
+  return querySchema(dbConnection)
 }
 
 /**
@@ -51,29 +45,37 @@ const initConnection = dbConfig => {
  * @returns {promise} Resolves with Array containing object with each column name and value
  */
 const runQuery = (sqlQuery, limit = false) => {
+  if (dbConnection === undefined) {
+    return Promise.reject('Unable to run query as not connected to database.')
+  }
   return dbConnection
     .raw(sqlQuery + (limit ? ' limit 1' : ''))
     .then(results => {
-      // TODO are results always in matrix first element ?
-      return results[0][0]
+      logger.debug('raw db results ', results)
+      // First array element is array of results
+      return results[0]
     })
 }
 
-const endConnection = connection => {
-  connection
-    .destroy()
-    .then(() => {
-      logger.info('Ended database connection.')
-    })
-    .catch(err => {
-      logger.warn(`Error ending database connectiion, ${err.stack}.`)
-    })
+const endConnection = () => {
+  if (dbConnection !== undefined) {
+    dbConnection
+      .destroy()
+      .then(() => {
+        logger.info('Ended database connection.')
+      })
+      .catch(err => {
+        logger.warn(`Error ending database connectiion, ${err.stack}.`)
+      })
+  } else {
+    logger.info('No database connection to end.')
+  }
 }
 
 // Shutdown
 exitHook(() => {
   logger.info('Shutting down database connections....')
-  endConnection(dbConnection)
+  endConnection()
 })
 
 module.exports = {

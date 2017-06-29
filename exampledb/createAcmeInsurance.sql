@@ -26,15 +26,15 @@ create table computerFraud (
   id int unsigned auto_increment not null primary key,
   loss int not null,
   ipAddress int unsigned null,
-  lossDate date not null
+  lossDate datetime not null
   ); 
 
 # Sample data
 insert into computerFraud() values(null, '45', inet_aton('100.200.127.4'), date_format('2017-01-18 15:22:03', '%Y-%m-%d %H:%i:%S'));
-insert into computerFraud() values(null, '54', inet_aton('100.200.127.4'), date_format('2017-01-18 15:23:03', '%Y-%m-%d %H:%i:%S'));
-insert into computerFraud() values(null, '63', inet_aton('100.200.127.4'), date_format('2017-01-18 15:24:03', '%Y-%m-%d %H:%i:%S'));
-insert into computerFraud() values(null, '72', inet_aton('100.200.127.4'), date_format('2017-01-18 15:25:03', '%Y-%m-%d %H:%i:%S'));
-insert into computerFraud() values(null, '101', inet_aton('100.200.127.4'), date_format('2017-01-18 15:26:03', '%Y-%m-%d %H:%i:%S'));
+insert into computerFraud() values(null, '54', inet_aton('100.200.127.4'), date_format('2017-01-18 16:23:03', '%Y-%m-%d %H:%i:%S'));
+insert into computerFraud() values(null, '63', inet_aton('100.200.127.4'), date_format('2017-01-18 21:24:03', '%Y-%m-%d %H:%i:%S'));
+insert into computerFraud() values(null, '72', inet_aton('100.200.127.4'), date_format('2017-01-18 23:25:03', '%Y-%m-%d %H:%i:%S'));
+insert into computerFraud() values(null, '101', inet_aton('100.200.127.9'), date_format('2017-01-18 23:26:03', '%Y-%m-%d %H:%i:%S'));
 
 #=================================================================
 # Schema to hold read only views, access from analytics engine.
