@@ -177,14 +177,17 @@ def main():
         print_ln('Results total %s.', total_count_sfix.reveal())
 
         for i in range(INDEX_SIZE):
-            # reveal sint then load_int sets to 0, why?  - look at cfix.load_int, foo is probably a regint
-            foo = index_count[i][0].reveal()
-            index_percent[i * 2].load_int(foo)
+            # can't load_int into cfix in an Array
+            index_cfix = cfix()
+            index_cfix.load_int(index_count[i][0].reveal())
+            index_percent[i * 2] = index_cfix
+
             count_sfix = sfix()
             count_sfix.load_int(index_count[i][1])
             index_percent[i * 2 + 1] = (count_sfix / total_count_sfix).reveal()
-            print_ln('Results entry %s: index revealed %s index %s count %s.',
-                     i, foo, index_percent[i * 2], index_percent[i * 2 + 1])
+
+            print_ln('Results entry %s: index %s count %s.', i,
+                     index_percent[i * 2], index_percent[i * 2 + 1])
 
         for i in range(NUM_CLIENTS):
             cfix.write_to_socket(client_sockets[i], index_percent,

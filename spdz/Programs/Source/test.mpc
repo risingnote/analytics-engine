@@ -1,41 +1,14 @@
-def fix_div():
-    '''sfix div test'''
-    sum_fix = sfix()
-    start = 1048576
-    for i in range(1):
-        sum_fix.load_int(start * 2**i)
-        cnt_fix = sfix()
-        cnt_fix.load_int(2)
+sfix.set_precision(10, 41)
+cfix.set_precision(10, 41)
 
-        print_ln('==============================')
-        print_ln('sfix precision %s. Total %s, count %s, avg %s.', sfix.f,
-                 sum_fix.reveal(),
-                 cnt_fix.reveal(), (sum_fix / cnt_fix).reveal())
-        shifted = cint(sum_fix.v.reveal())
-        print_ln('sfix shifted %s', shifted)
-        print_ln('==============================')
+index_percent = Array(1, cfix)
+index_count = Array(1, sint)
+index_count[0] = sint(100)
 
+foo = index_count[0].reveal()
+bar = cfix()
+bar.load_int(foo)
 
-# def float_div(a, b):
-#     '''sfloat div test'''
-#     a = sfloat(a)
-#     b = sfloat(b)
+index_percent[0] = bar
 
-#     c = a / b
-
-#     print_ln('==============================')
-#     print_ln('Total sfloat v %s, p %s, z %s, s %s.',
-#              c.v.reveal(), c.p.reveal(), c.z.reveal(), c.s.reveal())
-#     print_ln('==============================')
-
-sfix.set_precision(9, 41)
-cfix.set_precision(9, 41)
-
-fix_div()
-
-# Already shifted as if from client
-client_input = sint(536870912)
-fix_input = sfix(client_input)
-print_ln('client fix point input %s.', fix_input.reveal())
-
-# float_div(64000, 4)
+print_ln('Results index revealed %s %s index %s .', foo, bar, index_percent[0])
