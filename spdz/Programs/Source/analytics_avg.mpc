@@ -115,6 +115,9 @@ def main():
         accumulator.assign_all(0)
 
         for i in range(NUM_CLIENTS):
+            shareCount = regint.read_from_socket(client_sockets[i])
+            print_ln('Requested %s shares.', shareCount)
+
             input_share = sint.receive_from_client(
                 2, client_sockets[i], ClientMessageType.TripleShares)
             accumulator[0] = accumulator[0] + input_share[0]

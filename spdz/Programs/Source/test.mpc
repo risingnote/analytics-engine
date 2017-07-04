@@ -1,14 +1,16 @@
-sfix.set_precision(10, 41)
-cfix.set_precision(10, 41)
+def receive_from_client(cls,
+                        n,
+                        client_id,
+                        message_type=ClientMessageType.NoType,
+                        encrypt=True):
+    """ Securely obtain shares of n values input by a client """
+    # send shares of a triple to client
+    triples = list(
+        itertools.chain(*(sint.get_random_triple() for i in range(n))))
+    sint.write_shares_to_socket(client_id, triples, message_type, encrypt)
 
-index_percent = Array(1, cfix)
-index_count = Array(1, sint)
-index_count[0] = sint(100)
-
-foo = index_count[0].reveal()
-bar = cfix()
-bar.load_int(foo)
-
-index_percent[0] = bar
-
-print_ln('Results index revealed %s %s index %s .', foo, bar, index_percent[0])
+    received = cint.read_from_socket(client_id, n)
+    y = [0] * n
+    for i in range(n):
+        y[i] = received[i] - triples[i * 3]
+    return y

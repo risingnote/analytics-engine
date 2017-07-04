@@ -165,6 +165,10 @@ def main():
         total_count = MemValue(sint(0))
 
         for i in range(NUM_CLIENTS):
+            # Block on user input, i.e. don't send shares until client requests.
+            shareCount = regint.read_from_socket(client_sockets[i])
+            print_ln('Requested %s shares.', shareCount)
+
             inputs = sint.receive_from_client(INDEX_SIZE * 2,
                                               client_sockets[i],
                                               ClientMessageType.TripleShares)

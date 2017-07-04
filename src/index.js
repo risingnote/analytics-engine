@@ -23,6 +23,7 @@ const logger = require('./support/logging')
 logger.info('Starting analytics engine.')
 
 // At startup init database connection and get schema
+// Read only operation - rerunnable.
 db
   .initConnection(dbConfig)
   .then(schema => {
@@ -36,7 +37,7 @@ db
 
 // At startup connect to SPDZ proxies, what about reconnects?
 spdz
-  .connectToProxies(dhKeyPair)
+  .connectToSpdz(dhKeyPair)
   .then(streams => {
     logger.info('Connected successfully to SPDZ engines.')
     const [spdzResultStream, spdzErrorStream] = streams
@@ -55,38 +56,47 @@ spdz
 const userQuery = (query, analyticFunc) => {
   userInteraction(query, analyticFunc)
     .then(inputs => {
-      return spdz.sendInputs(inputs)
+      spdz.requestShares(inputs.length)
+      return inputs
     })
-    .then(() => {
-      logger.debug('Inputs sent to SPDZ.')
+    .then(inputs => {
+      return spdz.sendSecretInputs(inputs)
     })
     .catch(err => {
       logger.warn(`Unable to run analytics query "${query}". ${err.message}.`)
     })
 }
 
-// const queries = [
-//   { query: 'select sum(salary), count(salary) from v_salary', func: 'avg' },
-//   {
-//     query: 'select sum(salary), count(salary) from v_salary where salary > 10000',
-//     func: 'avg'
-//   }
-// ]
+const queries = [
+  { query: 'select sum(salary), count(salary) from v_salary', func: 'avg' },
+  {
+    query: 'select sum(salary), count(salary) from v_salary where salary > 10000',
+    func: 'avg'
+  }
+]
 
-const queries = dbConfig.database === 'acmebank'
-  ? [
-    {
-      query: 'select hour(incidentDate), count(*) from v_cyberFraud group by hour(incidentDate)',
-      func: 'hist_percent'
-    }
-  ]
-  : [
-    {
-      query: 'select hour(lossDate), count(*) from v_cyberFraud group by hour(lossDate)',
-      func: 'hist_percent'
-    }
-  ]
+// const queries = dbConfig.database === 'acmebank'
+//   ? [
+//     {
+//       query: 'select hour(incidentDate), count(*) from v_cyberFraud group by hour(incidentDate)',
+//       func: 'hist_percent'
+//     },
+//     {
+//       query: 'select hour(incidentDate), count(*) from v_cyberFraud group by hour(incidentDate)',
+//       func: 'hist_percent'
+//     }
+//   ]
+//   : [
+//     {
+//       query: 'select hour(lossDate), count(*) from v_cyberFraud group by hour(lossDate)',
+//       func: 'hist_percent'
+//     },
+//     {
+//       query: 'select hour(lossDate), count(*) from v_cyberFraud group by hour(lossDate)',
+//       func: 'hist_percent'
+//     }
+//   ]
 
-Bacon.sequentially(3000, queries).onValue(value =>
+Bacon.sequentially(5000, queries).onValue(value =>
   userQuery(value.query, value.func)
 )

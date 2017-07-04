@@ -11,7 +11,7 @@ const proxyConfig = require('../../config/spdzProxy')
 
 const IGNORE_NUMBER = -1
 
-const connectToProxies = dhKeyPair => {
+const connectToSpdz = dhKeyPair => {
   spdzGuiLib.setDHKeyPair(dhKeyPair.clientPublicKey, dhKeyPair.clientPrivateKey)
   const spdzProxyList = proxyConfig.spdzProxyList.map(spdzProxy => {
     return {
@@ -20,15 +20,15 @@ const connectToProxies = dhKeyPair => {
     }
   })
 
-  return spdzGuiLib.connectToProxiesPromise(
+  return spdzGuiLib.connectToSpdzPromise(
     spdzProxyList,
     {},
     dhKeyPair.clientPublicKey
   )
 }
 
-const sendInputs = inputList => {
-  return spdzGuiLib.sendInputsPromise(inputList)
+const sendSecretInputs = inputList => {
+  return spdzGuiLib.sendSecretInputsPromise(inputList)
 }
 
 const verifyQuery = (colCount, functionId) => {
@@ -62,11 +62,15 @@ const padData = (arrayData, colCount, functionId) => {
   if (arrayData.length != analFuncs[functionId].inputRowCount * colCount) {
     const filler = new Array(
       analFuncs[functionId].inputRowCount * colCount - arrayData.length
-    ).fill(-1)
+    ).fill(IGNORE_NUMBER)
     return arrayData.concat(filler)
   } else {
     return arrayData
   }
+}
+
+const requestShares = number => {
+  return spdzGuiLib.sendClearInputsPromise([number])
 }
 
 exitHook(() => {
@@ -81,8 +85,9 @@ exitHook(() => {
 
 module.exports = {
   analyticFunctions: analFuncs,
-  connectToProxies: connectToProxies,
+  connectToSpdz: connectToSpdz,
   padData: padData,
-  sendInputs: sendInputs,
+  requestShares: requestShares,
+  sendSecretInputs: sendSecretInputs,
   verifyQuery: verifyQuery
 }
