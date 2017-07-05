@@ -166,6 +166,7 @@ def main():
 
         for i in range(NUM_CLIENTS):
             # Block on user input, i.e. don't send shares until client requests.
+            # Can be used to indicate go or exit out of this calc.
             shareCount = regint.read_from_socket(client_sockets[i])
             print_ln('Requested %s shares.', shareCount)
 
