@@ -33,12 +33,12 @@ const sendSecretInputs = inputList => {
 
 const verifyQuery = (colCount, functionId) => {
   assert(
-    analFuncs.hasOwnProperty(functionId),
+    analFuncs.getFunction(functionId) !== undefined,
     `Requested analytic function ${functionId} is not found.`
   )
 
   assert(
-    analFuncs[functionId].inputs.length === colCount,
+    analFuncs.getFunction(functionId).inputs.length === colCount,
     `The number of columns returned ${colCount} does not match the expected ${functionId} 
     function input ${analFuncs[functionId].inputs.length}.`
   )
@@ -55,13 +55,13 @@ const verifyQuery = (colCount, functionId) => {
  */
 const padData = (arrayData, colCount, functionId) => {
   assert(
-    analFuncs.hasOwnProperty(functionId),
+    analFuncs.getFunction(functionId) !== undefined,
     `Requested analytic function ${functionId} is not found.`
   )
 
   if (arrayData.length != analFuncs[functionId].inputRowCount * colCount) {
     const filler = new Array(
-      analFuncs[functionId].inputRowCount * colCount - arrayData.length
+      analFuncs.getFunction(functionId).inputRowCount * colCount - arrayData.length
     ).fill(IGNORE_NUMBER)
     return arrayData.concat(filler)
   } else {
