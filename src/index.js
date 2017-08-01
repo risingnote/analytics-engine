@@ -26,16 +26,7 @@ logger.info('Starting analytics engine.')
 
 // At startup init database connection and get schema
 // Read only operation - rerunnable.
-db
-  .initConnection(dbConfig)
-  .then(schema => {
-    logger.info('Database schema is:')
-    schema.map(table => logger.info(table))
-  })
-  .catch(err => {
-    logger.warn(`Unable to read schema at startup, ${err.message}.`)
-    db.endConnection()
-  })
+db.initConnection(dbConfig)
 
 // At startup connect to SPDZ proxies, what about reconnects?
 spdz

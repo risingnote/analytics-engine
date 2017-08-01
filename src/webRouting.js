@@ -1,9 +1,10 @@
 /**
  * Manage express routing for web server.
  */
-const analyticFunctions = require('./spdz/functions.js').functionList
 const cors = require('cors')
 
+const analyticFunctions = require('./spdz/functions.js').functionList
+const db = require('./db')
 
 module.exports = (app) => {
   /**
@@ -15,6 +16,11 @@ module.exports = (app) => {
   app.get('/analyticsapi/functions', (req, res) => {
     res.json(analyticFunctions)
   })
+
+  app.get('/analyticsapi/schema', (req, res) => {
+    res.json(db.getSchema())
+  })
+
 
   app.disable('x-powered-by')
 }

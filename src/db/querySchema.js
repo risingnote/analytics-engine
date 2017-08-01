@@ -25,7 +25,7 @@ const columnsForTable = (connection, tableName) => {
  * Unable to get auth working for querying information_schema directly.
  * @param {knex connection} Database connection.
  * @returns {promise} Resolves with Array containing entry for each table: 
- * {tableName:'tblname', columns: {colname1: {type: 'int', maxlength: 'null'},...} }
+ * {databaseName:'dbname', tableName:'tblname', columns: {colname1: {type: 'int', maxlength: 'null'},...} }
  */
 const querySchema = connection => {
   return connection

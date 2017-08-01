@@ -24,6 +24,10 @@ const createConnection = (host, user, password, database) => {
   })
 }
 
+/**
+ * Connect to database and (async) query schema and store result.
+ * @param {Object} dbConfig db connection details.
+ */
 const initConnection = dbConfig => {
   try {
     dbConnection = createConnection(
@@ -36,7 +40,16 @@ const initConnection = dbConfig => {
     return Promise.reject(err)
   }
 
-  return querySchema(dbConnection)
+  querySchema(dbConnection)
+    .then(dbSchema => {
+      schema = dbSchema
+      logger.info('Database schema is:')
+      dbSchema.map(table => logger.info(table))
+    })
+    .catch(err => {
+      logger.warn(`Unable to read schema at startup, ${err.message}.`)
+      endConnection()
+    })
 }
 
 /**
@@ -80,7 +93,7 @@ exitHook(() => {
 
 module.exports = {
   initConnection: initConnection,
-  schema: () => schema,
+  getSchema: () => schema,
   runQuery: runQuery,
   endConnection: endConnection
 }
