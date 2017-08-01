@@ -32,15 +32,16 @@ const sendSecretInputs = inputList => {
 }
 
 const verifyQuery = (colCount, functionId) => {
+  const analysisFunction = analFuncs.getFunction(functionId)
   assert(
-    analFuncs.getFunction(functionId) !== undefined,
+    analysisFunction !== undefined,
     `Requested analytic function ${functionId} is not found.`
   )
 
   assert(
-    analFuncs.getFunction(functionId).inputs.length === colCount,
+    analysisFunction.inputs.length === colCount,
     `The number of columns returned ${colCount} does not match the expected ${functionId} 
-    function input ${analFuncs[functionId].inputs.length}.`
+    function input ${analysisFunction.inputs.length}.`
   )
 
   return true
@@ -54,14 +55,15 @@ const verifyQuery = (colCount, functionId) => {
  * @param {String} functionId function name
  */
 const padData = (arrayData, colCount, functionId) => {
+  const analysisFunction = analFuncs.getFunction(functionId)
   assert(
-    analFuncs.getFunction(functionId) !== undefined,
+    analysisFunction !== undefined,
     `Requested analytic function ${functionId} is not found.`
   )
 
-  if (arrayData.length != analFuncs[functionId].inputRowCount * colCount) {
+  if (arrayData.length != analysisFunction.inputRowCount * colCount) {
     const filler = new Array(
-      analFuncs.getFunction(functionId).inputRowCount * colCount - arrayData.length
+      analysisFunction.inputRowCount * colCount - arrayData.length
     ).fill(IGNORE_NUMBER)
     return arrayData.concat(filler)
   } else {

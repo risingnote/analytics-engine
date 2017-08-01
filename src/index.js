@@ -6,11 +6,13 @@
  *  - receive the result and send to the client
  */
 'use strict'
+const express = require('express')
+const http = require('http')
+const webRouting = require('./webRouting')
 
-const Bacon = require('baconjs').Bacon
 const db = require('./db')
 const spdz = require('./spdz')
-const userInteraction = require('./userInteraction')
+// const simulateQuery = require('./userInteraction/simulateQuery')
 
 // Run time config
 const dbConfigLocation = process.env.DB_CONFIG_FILE || '../config/dbConfig'
@@ -52,51 +54,19 @@ spdz
     logger.warn(`Unable to connect to SPDZ engines. ${err.message}.`)
   })
 
-// Simulate user queries
-const userQuery = (query, analyticFunc) => {
-  userInteraction(query, analyticFunc)
-    .then(inputs => {
-      spdz.requestShares(inputs.length)
-      return inputs
-    })
-    .then(inputs => {
-      return spdz.sendSecretInputs(inputs)
-    })
-    .catch(err => {
-      logger.warn(`Unable to run analytics query "${query}". ${err.message}.`)
-    })
-}
+// Serve client web requests
+const httpPortNum = process.env.HTTP_PORT || '8080'
 
-const queries = [
-  { query: 'select sum(salary), count(salary) from v_salary', func: 'avg' },
-  {
-    query: 'select sum(salary), count(salary) from v_salary where salary > 10000',
-    func: 'avg'
-  }
-]
+const app = express()
 
-// const queries = dbConfig.database === 'acmebank'
-//   ? [
-//     {
-//       query: 'select hour(incidentDate), count(*) from v_cyberFraud group by hour(incidentDate)',
-//       func: 'hist_percent'
-//     },
-//     {
-//       query: 'select hour(incidentDate), count(*) from v_cyberFraud group by hour(incidentDate)',
-//       func: 'hist_percent'
-//     }
-//   ]
-//   : [
-//     {
-//       query: 'select hour(lossDate), count(*) from v_cyberFraud group by hour(lossDate)',
-//       func: 'hist_percent'
-//     },
-//     {
-//       query: 'select hour(lossDate), count(*) from v_cyberFraud group by hour(lossDate)',
-//       func: 'hist_percent'
-//     }
-//   ]
+// Configure web server paths
+webRouting(app)
 
-Bacon.sequentially(5000, queries).onValue(value =>
-  userQuery(value.query, value.func)
-)
+// Configure web server
+const webServer = http.createServer(app)
+
+webServer.listen(httpPortNum, () => {
+  logger.info(`Serving Analytics Engine API on port ${httpPortNum}.`)
+})
+
+// simulateQuery()

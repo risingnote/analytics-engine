@@ -32,7 +32,7 @@
   "dependencies": {
     "assert": "^1.4.1",
     "baconjs": "^0.7.94",
-    "cors": "^2.8.3",
+    "cors": "^2.8.4",
     "exit-hook": "^1.1.1",
     "express": "^4.15.3",
     "knex": "^0.13.0",
