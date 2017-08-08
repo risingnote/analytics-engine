@@ -12,9 +12,10 @@ const webRouting = require('./webRouting')
 
 const db = require('./db')
 const spdz = require('./spdz')
+const userInteraction = require('./userInteraction')
 // const simulateQuery = require('./userInteraction/simulateQuery')
 
-// Run time config
+// Runtime config
 const dbConfigLocation = process.env.DB_CONFIG_FILE || '../config/dbConfig'
 const dbConfig = require(dbConfigLocation)
 const dhKeyPairLocation = process.env.KEY_PAIR_FILE || '../config/dhKeyPair'
@@ -55,6 +56,9 @@ webRouting(app)
 
 // Configure web server
 const webServer = http.createServer(app)
+
+// Socket.io server for user interactions
+userInteraction.init(webServer)
 
 webServer.listen(httpPortNum, () => {
   logger.info(`Serving Analytics Engine API on port ${httpPortNum}.`)

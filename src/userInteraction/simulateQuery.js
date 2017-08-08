@@ -9,7 +9,7 @@
 
 const Bacon = require('baconjs').Bacon
 const spdz = require('../spdz')
-const userInteraction = require('.')
+const userInteraction = require('./ProcessUserRequest')
 
 const logger = require('../support/logging')
 
