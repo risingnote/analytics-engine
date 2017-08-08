@@ -7,12 +7,11 @@ const spdzGuiLib = require('spdz-gui-lib')
 const exitHook = require('../support/exitHook')
 const logger = require('../support/logging')
 const analFuncs = require('./functions')
-const proxyConfig = require('../../config/spdzProxy')
 
 const IGNORE_NUMBER = -1
 
-const connectToSpdz = dhKeyPair => {
-  spdzGuiLib.setDHKeyPair(dhKeyPair.clientPublicKey, dhKeyPair.clientPrivateKey)
+const connectToSpdz = (proxyConfig, clientDhKeyPair) => {
+  spdzGuiLib.setDHKeyPair(clientDhKeyPair.publicKey, clientDhKeyPair.privateKey)
   const spdzProxyList = proxyConfig.spdzProxyList.map(spdzProxy => {
     return {
       url: spdzProxy.url + proxyConfig.spdzApiRoot,
@@ -23,7 +22,7 @@ const connectToSpdz = dhKeyPair => {
   return spdzGuiLib.connectToSpdzPromise(
     spdzProxyList,
     {},
-    dhKeyPair.clientPublicKey
+    clientDhKeyPair.publicKey
   )
 }
 

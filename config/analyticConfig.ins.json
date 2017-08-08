@@ -1,0 +1,26 @@
+{
+  "friendlyName": "acmeinsurance",
+  "spdzProxy": {
+    "spdzApiRoot": "/spdzapi",
+    "spdzProxyList": [
+      {
+        "url": "http://localhost:3010",
+        "publicKey": "9808b73811b3d0a638e07e4b363ad362d099fe02b4810729bbfd09ec1f82307b"
+      },
+      {
+        "url": "http://localhost:3011",
+        "publicKey": "e39fcfc519fc5675f3b1bb076fe526e16bd091ff3bc081390aa1659ee822ad03"
+      }
+    ]
+  },
+  "clientX25519": {
+    "publicKey": "242584f87e218f54299bfd1ecef97884f715f14305a5d05f78afb9bb92c7bc54",
+    "privateKey": "05526e1228e49f78f61345786ac4b059014426c752129e67eeca0db7fafb103a"
+  },
+  "dbConfig": {
+    "host": "localhost",
+    "user": "spdzuser_ins",
+    "password": "inspassword",
+    "database": "acmeinsurance"
+  }
+}
