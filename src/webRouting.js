@@ -6,7 +6,7 @@ const cors = require('cors')
 const analyticFunctions = require('./spdz/functions.js').functionList
 const db = require('./db')
 
-module.exports = (app) => {
+module.exports = (app, friendlyName) => {
   /**
    * REST API wide middleware goes here
    */
@@ -18,7 +18,7 @@ module.exports = (app) => {
   })
 
   app.get('/analyticsapi/schema', (req, res) => {
-    res.json(db.getSchema())
+    res.json({ schema: db.getSchema(), friendlyName: friendlyName })
   })
 
 

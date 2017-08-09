@@ -52,7 +52,7 @@ const httpPortNum = process.env.HTTP_PORT || '8080'
 const app = express()
 
 // Configure web server paths
-webRouting(app)
+webRouting(app, config.friendlyName)
 
 // Configure web server
 const webServer = http.createServer(app)

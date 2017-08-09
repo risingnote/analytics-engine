@@ -8,6 +8,13 @@ const Io = require('socket.io')
 const extractDbValues = require('./ProcessUserRequest')
 const spdz = require('../spdz')
 
+const STATUS = {
+  GOOD: 0,
+  INFO: 1,
+  WARN: 2,
+  ERROR: 3
+}
+
 let ns = undefined
 // Analytics engine depends on a SPDZ process that only runs 1 calculation at a time. 
 // Manage concurrency here by storing socket that analytics engine is running a calculation for.
@@ -30,7 +37,7 @@ const runQuery = ((socket, msg) => {
   if (busySocket !== undefined) {
     const errMsg = `Unable to run the analytics query, engine is busy.`
     logger.debug(errMsg)
-    socket.emit('runQueryResult', { msg: errMsg, status: 'warn', serverName: serverName })
+    socket.emit('runQueryResult', { msg: errMsg, status: STATUS.WARN, serverName: serverName })
   } else {
     setBusySocket(socket)
     extractDbValues(msg.query, msg.analyticFuncId)
@@ -38,15 +45,27 @@ const runQuery = ((socket, msg) => {
         dbValues = inputs
         const successMsg = `Succesfully ran analytics query "${msg.query}".`
         logger.debug(successMsg)
-        socket.emit('runQueryResult', { msg: successMsg, status: 'info', serverName: serverName })
+        socket.emit('runQueryResult', { msg: successMsg, status: STATUS.INFO, serverName: serverName })
       })
       .catch(err => {
         dbValues = undefined
         const errMsg = `Problem runnng analytics query "${msg.query}". ${err.message}.`
         logger.debug(errMsg)
-        socket.emit('runQueryResult', { msg: errMsg, status: 'danger', serverName: serverName })
+        socket.emit('runQueryResult', { msg: errMsg, status: STATUS.ERROR, serverName: serverName })
         setBusySocket(undefined)
       })
+  }
+})
+
+/**
+ * Client has requested reset after running query, most likely the other engine query failed.
+ * @param {socket} socket 
+ */
+const runQueryReset = (socket => {
+  if (busySocket !== undefined && busySocket.id === socket.id) {
+    logger.debug('Client has requested query reset.')
+    dbValues = undefined
+    setBusySocket(undefined)
   }
 })
 
@@ -56,10 +75,12 @@ const runQuery = ((socket, msg) => {
 const goSpdz = ((socket) => {
   if (busySocket === undefined || busySocket.id !== socket.id) {
     const errMsg = `Unable to dispatch the analytics query to SPDZ. You are not the active query.`
-    socket.emit('goSpdzResult', { msg: errMsg, status: 'warn', serverName: serverName })
+    logger.debug(errMsg)
+    socket.emit('goSpdzResult', { msg: errMsg, status: STATUS.WARN, serverName: serverName })
   } else if (dbValues === undefined) {
     const errMsg = `Unable to dispatch the analytics query to SPDZ. There is no DB query.`
-    socket.emit('goSpdzResult', { msg: errMsg, status: 'warn', serverName: serverName })
+    logger.debug(errMsg)
+    socket.emit('goSpdzResult', { msg: errMsg, status: STATUS.WARN, serverName: serverName })
   } else {
     spdz.requestShares(dbValues.length)
       .then(() => {
@@ -68,12 +89,14 @@ const goSpdz = ((socket) => {
       .then(() => {
         dbValues = undefined
         const successMsg = `Succesfully sent analytics query to SPDZ.`
-        socket.emit('goSpdzResult', { msg: successMsg, status: 'info', serverName: serverName })
+        logger.debug(successMsg)
+        socket.emit('goSpdzResult', { msg: successMsg, status: STATUS.INFO, serverName: serverName })
       })
       .catch(err => {
         dbValues = undefined
         const errMsg = `Unable to send analytics query to SPDZ. ${err.message}.`
-        socket.emit('goSpdzResult', { msg: errMsg, status: 'danger', serverName: serverName })
+        logger.debug(errMsg)
+        socket.emit('goSpdzResult', { msg: errMsg, status: STATUS.ERROR, serverName: serverName })
         setBusySocket(undefined)
       })
   }
@@ -117,6 +140,10 @@ const init = (httpServer, friendlyName) => {
       runQuery(socket, msg)
     })
 
+    socket.on('runQueryReset', () => {
+      runQueryReset(socket)
+    })
+
     socket.on('goSpdz', () => {
       goSpdz(socket)
     })
@@ -133,10 +160,10 @@ const init = (httpServer, friendlyName) => {
  */
 const notifyResult = (result => {
   if (busySocket !== undefined) {
-    busySocket.emit('analyticResult', { msg: result, status: 'success', serverName: serverName })
-    setBusySocket(ns, undefined)
+    busySocket.emit('analyticResult', { msg: result, status: STATUS.GOOD, serverName: serverName })
+    setBusySocket(undefined)
   } else {
-    logger.warn('Got SPDZ result but no active socket to send it to.')
+    logger.warn('Got SPDZ result but no active socket to send it too.')
   }
 })
 
@@ -146,10 +173,10 @@ const notifyResult = (result => {
  */
 const notifySpdzError = (err => {
   if (busySocket !== undefined) {
-    busySocket.emit('spdzError', { msg: err, status: 'danger', serverName: serverName })
-    setBusySocket(ns, undefined)
+    busySocket.emit('spdzError', { msg: err, status: STATUS.ERROR, serverName: serverName })
+    setBusySocket(undefined)
   } else {
-    logger.warn(`Got SPDZ error ${err} but no active socket to send it to.`)
+    logger.warn(`Got SPDZ error ${err} but no active socket to send it too.`)
   }
 })
 
