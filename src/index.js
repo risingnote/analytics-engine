@@ -29,7 +29,7 @@ db.initConnection(config.dbConfig)
 
 // At startup connect to SPDZ proxies, what about reconnects?
 spdz
-  .connectToSpdz(config.spdzProxy, config.clientX25519)
+  .connectToSpdz(config.spdzProxy, config.clientX25519, config.analysisFunctions)
   .then(streams => {
     logger.info('Connected successfully to SPDZ engines.')
     const [spdzResultStream, spdzErrorStream] = streams
@@ -52,7 +52,7 @@ const httpPortNum = process.env.HTTP_PORT || '8080'
 const app = express()
 
 // Configure web server paths
-webRouting(app, config.friendlyName)
+webRouting(app, config.friendlyName, config.analysisFunctions)
 
 // Configure web server
 const webServer = http.createServer(app)

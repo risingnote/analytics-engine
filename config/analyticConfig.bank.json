@@ -22,5 +22,107 @@
     "user": "spdzuser_bank",
     "password": "bankpassword",
     "database": "acmebank"
-  }
+  },
+  "analysisFunctions": [
+    {
+      "id": "avg",
+      "name": "Average",
+      "description": "Calculate avg as \u03A3 localSum / \u03A3 localCount.",
+      "example": "select sum(col_1), count(col_1) \n  from table_name \n where col2 >1000",
+      "inputs": [
+        {
+          "name": "localSum",
+          "type": "int",
+          "byteSize": 4
+        },
+        {
+          "name": "localCount",
+          "type": "int",
+          "byteSize": 4
+        }
+      ],
+      "inputRowCount": {
+        "max": 1,
+        "batch": 1
+      },
+      "outputs": [
+        {
+          "name": "result",
+          "type": "float",
+          "byteSize": 16
+        }
+      ],
+      "outputRowCount": 1
+    },
+    {
+      "id": "percentHour",
+      "name": "Percentage by hour",
+      "description": "Percentage split of a summed value across hour.",
+      "example": "select hour(incidentDate), count(*) \n  from table_name \n group by hour(incidentDate)",
+      "inputs": [
+        {
+          "name": "xIndex",
+          "type": "int",
+          "byteSize": 4
+        },
+        {
+          "name": "yCount",
+          "type": "int",
+          "byteSize": 4
+        }
+      ],
+      "inputRowCount": {
+        "max": 24,
+        "batch": 24
+      },
+      "outputs": [
+        {
+          "name": "xIndex",
+          "type": "float",
+          "byteSize": 16
+        },
+        {
+          "name": "yPercent",
+          "type": "float",
+          "byteSize": 16
+        }
+      ],
+      "outputRowCount": 24
+    },
+    {
+      "id": "sumlookup",
+      "name": "Sum by lookup",
+      "description": "Sum of quantity grouped across lookup value. Party 1 supplies quantity.",
+      "example": "Party 1\nselect identifier, quantity\n  from table_name\n \nParty 2\nselect identifier, lookupvalue\n  from table_name",
+      "inputs": [
+        {
+          "name": "identifier",
+          "type": "int",
+          "byteSize": 4
+        },
+        {
+          "name": "yQuantity",
+          "type": "int",
+          "byteSize": 4
+        }
+      ],
+      "inputRowCount": {
+        "max": -1,
+        "batch": 100
+      },
+      "outputs": [
+        {
+          "name": "xLookupValue",
+          "type": "float",
+          "byteSize": 16
+        },
+        {
+          "name": "ySumQuantity",
+          "type": "float",
+          "byteSize": 16
+        }
+      ],
+      "outputRowCount": 50
+    }
+  ]
 }

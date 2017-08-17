@@ -2,11 +2,9 @@
  * Manage express routing for web server.
  */
 const cors = require('cors')
-
-const analyticFunctions = require('./spdz/functions.js').functionList
 const db = require('./db')
 
-module.exports = (app, friendlyName) => {
+module.exports = (app, friendlyName, analyticFunctions) => {
   /**
    * REST API wide middleware goes here
    */

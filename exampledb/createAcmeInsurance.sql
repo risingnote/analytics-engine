@@ -36,6 +36,17 @@ insert into computerFraud() values(null, '63', inet_aton('100.200.127.4'), date_
 insert into computerFraud() values(null, '72', inet_aton('100.200.127.4'), date_format('2017-01-18 23:25:03', '%Y-%m-%d %H:%i:%S'));
 insert into computerFraud() values(null, '101', inet_aton('100.200.127.9'), date_format('2017-01-18 23:26:03', '%Y-%m-%d %H:%i:%S'));
 
+drop table if exists cyberAttribution;
+create table cyberAttribution (
+  id int unsigned auto_increment not null primary key,
+  ipAddress int unsigned not null,
+  attributionId int not null
+  ); 
+
+# Sample data
+insert into cyberAttribution() values(null, inet_aton('100.200.127.4'), 1);
+insert into cyberAttribution() values(null, inet_aton('100.200.127.5'), 2);
+
 #=================================================================
 # Schema to hold read only views, access from analytics engine.
 #=================================================================
@@ -51,11 +62,18 @@ create algorithm = temptable
   sql security definer
  view v_cyberFraud as select * from computerFraud;
 
+drop view if exists v_attribution;
+
+create algorithm = temptable 
+  sql security definer
+ view v_attribution as select * from cyberAttribution;
+
 drop user if exists 'spdzuser_ins'@'172.17.0.%' ;
 create user 'spdzuser_ins'@'172.17.0.%' 
  identified by 'inspassword' password expire never;
 
 grant select on v_salary to 'spdzuser_ins'@'172.17.0.%' ;
 grant select on v_cyberFraud to 'spdzuser_ins'@'172.17.0.%' ;
+grant select on v_attribution to 'spdzuser_ins'@'172.17.0.%' ;
 
 commit;

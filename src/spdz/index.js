@@ -6,11 +6,16 @@ const spdzGuiLib = require('spdz-gui-lib')
 
 const exitHook = require('../support/exitHook')
 const logger = require('../support/logging')
-const analFuncs = require('./functions')
 
+let funcDefinitions = []
 const IGNORE_NUMBER = -1
 
-const connectToSpdz = (proxyConfig, clientDhKeyPair) => {
+const getFunction = funcId => {
+  return funcDefinitions.find(func => func.id === funcId)
+}
+
+const connectToSpdz = (proxyConfig, clientDhKeyPair, analFuncs) => {
+  funcDefinitions = analFuncs
   spdzGuiLib.setDHKeyPair(clientDhKeyPair.publicKey, clientDhKeyPair.privateKey)
   const spdzProxyList = proxyConfig.spdzProxyList.map(spdzProxy => {
     return {
@@ -31,7 +36,7 @@ const sendSecretInputs = inputList => {
 }
 
 const verifyQuery = (colCount, functionId) => {
-  const analysisFunction = analFuncs.getFunction(functionId)
+  const analysisFunction = getFunction(functionId)
   assert(
     analysisFunction !== undefined,
     `Requested analytic function ${functionId} is not found.`
@@ -54,7 +59,7 @@ const verifyQuery = (colCount, functionId) => {
  * @param {String} functionId function name
  */
 const padData = (arrayData, colCount, functionId) => {
-  const analysisFunction = analFuncs.getFunction(functionId)
+  const analysisFunction = getFunction(functionId)
   assert(
     analysisFunction !== undefined,
     `Requested analytic function ${functionId} is not found.`
@@ -85,7 +90,6 @@ exitHook(() => {
 })
 
 module.exports = {
-  analyticFunctions: analFuncs,
   connectToSpdz: connectToSpdz,
   padData: padData,
   requestShares: requestShares,
