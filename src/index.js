@@ -29,7 +29,11 @@ db.initConnection(config.dbConfig)
 
 // At startup connect to SPDZ proxies, what about reconnects?
 spdz
-  .connectToSpdz(config.spdzProxy, config.clientX25519, config.analysisFunctions)
+  .connectToSpdz(
+    config.spdzProxy,
+    config.clientX25519,
+    config.analysisFunctions
+  )
   .then(streams => {
     logger.info('Connected successfully to SPDZ engines.')
     const [spdzResultStream, spdzErrorStream] = streams

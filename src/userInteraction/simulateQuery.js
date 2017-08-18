@@ -31,7 +31,8 @@ const userQuery = (query, analyticFunc) => {
 const queries = [
   { query: 'select sum(salary), count(salary) from v_salary', func: 'avg' },
   {
-    query: 'select sum(salary), count(salary) from v_salary where salary > 10000',
+    query:
+      'select sum(salary), count(salary) from v_salary where salary > 10000',
     func: 'avg'
   }
 ]

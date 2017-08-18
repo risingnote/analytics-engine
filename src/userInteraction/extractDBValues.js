@@ -2,12 +2,14 @@ const db = require('../db')
 const spdz = require('../spdz')
 const logger = require('../support/logging')
 
-const processUserRequest = (query, analyticFunc) => {
+const extractDBValues = (query, analyticFunc) => {
   return db
     .runQuery(query, true)
     .then(results => {
       logger.debug(
-        `Run query with limit "${query}" returned results ${JSON.stringify(results)}.`
+        `Run query with limit "${query}" returned results ${JSON.stringify(
+          results
+        )}.`
       )
       try {
         spdz.verifyQuery(Object.keys(results[0]).length, analyticFunc)
@@ -23,8 +25,13 @@ const processUserRequest = (query, analyticFunc) => {
       const matrixData = data.map(row => colKeys.map(key => row[key]))
       const arrayData = [].concat.apply([], matrixData)
 
-      return spdz.padData(arrayData, colKeys.length, analyticFunc)
+      return spdz.formatInput(
+        arrayData,
+        colKeys.length,
+        analyticFunc.inputRowCount.bufferSize,
+        analyticFunc.inputRowCount.batched
+      )
     })
 }
 
-module.exports = processUserRequest
+module.exports = extractDBValues

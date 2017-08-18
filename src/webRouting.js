@@ -19,6 +19,5 @@ module.exports = (app, friendlyName, analyticFunctions) => {
     res.json({ schema: db.getSchema(), friendlyName: friendlyName })
   })
 
-
   app.disable('x-powered-by')
 }

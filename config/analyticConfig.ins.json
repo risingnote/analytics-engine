@@ -42,8 +42,8 @@
         }
       ],
       "inputRowCount": {
-        "max": 1,
-        "batch": 1
+        "bufferSize": 1,
+        "batched": false
       },
       "outputs": [
         {
@@ -72,8 +72,8 @@
         }
       ],
       "inputRowCount": {
-        "max": 24,
-        "batch": 24
+        "bufferSize": 24,
+        "batched": false
       },
       "outputs": [
         {
@@ -107,8 +107,8 @@
         }
       ],
       "inputRowCount": {
-        "max": 50,
-        "batch": 50
+        "bufferSize": 50,
+        "batched": false
       },
       "outputs": [
         {
