@@ -2,25 +2,28 @@ const db = require('../db')
 const spdz = require('../spdz')
 const logger = require('../support/logging')
 
+/**
+ * Extract the data and validate sizes against the analytic function. 
+ * @param {String} query as SQL to run 
+ * @param {Object} analyticFunc to apply to query data 
+ * 
+ * @returns {Array<Array>} array of input data arrays to support batching inputs
+ */
 const extractDBValues = (query, analyticFunc) => {
   return db
-    .runQuery(query, true)
-    .then(results => {
-      logger.debug(
-        `Run query with limit "${query}" returned results ${JSON.stringify(
-          results
-        )}.`
-      )
+    .runQuery(query)
+    .then(data => {
+      logger.debug(`Run full query returned data ${JSON.stringify(data)}.`)
+
       try {
-        spdz.verifyQuery(Object.keys(results[0]).length, analyticFunc)
-        return db.runQuery(query, false)
+        spdz.verifyQuery(Object.keys(data[0]).length, data.length, analyticFunc)
+        return data
       } catch (err) {
         return Promise.reject(err)
       }
     })
     .then(data => {
-      logger.debug(`Run full query returned data ${JSON.stringify(data)}.`)
-      // Extract values from each row and flatten into 1d array.
+      // Extract values from each row and flatten into 1d array (row1col1, row1col2, row2col1 etc.)
       const colKeys = Object.keys(data[0])
       const matrixData = data.map(row => colKeys.map(key => row[key]))
       const arrayData = [].concat.apply([], matrixData)
@@ -28,8 +31,7 @@ const extractDBValues = (query, analyticFunc) => {
       return spdz.formatInput(
         arrayData,
         colKeys.length,
-        analyticFunc.inputRowCount.bufferSize,
-        analyticFunc.inputRowCount.batched
+        analyticFunc.inputRowCount.rowBufferSize
       )
     })
 }

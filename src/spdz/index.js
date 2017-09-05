@@ -35,12 +35,29 @@ const sendSecretInputs = inputList => {
   return spdzGuiLib.sendSecretInputsPromise(inputList)
 }
 
-const verifyQuery = (colCount, analyticFunction) => {
+/**
+ * Verify that query matches expected input limits.
+ * 
+ * @param {Number} colCount Cols in query
+ * @param {Number} rowCount Rows in query
+ * @param {Object} analyticFunction Description of function
+ */
+const verifyQuery = (colCount, rowCount, analyticFunction) => {
   assert(
-    analyticFunction.inputs.length === colCount,
+    colCount === analyticFunction.inputs.length,
     `The number of columns returned ${colCount} does not match the expected ${analyticFunction.id} 
     function input ${analyticFunction.inputs.length}.`
   )
+
+  if (!analyticFunction.inputRowCount.batched) {
+    assert(
+      rowCount <= analyticFunction.inputRowCount.rowBufferSize,
+      `The function ${analyticFunction.id} does not support batched input and the 
+      rows returned ${rowCount} exceeds the maximum supported ${analyticFunction
+        .inputRowCount.rowBufferSize}.`
+    )
+  }
+
   return true
 }
 

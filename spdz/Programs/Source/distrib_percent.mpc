@@ -15,7 +15,10 @@ CLIENT_PUBLIC_KEYS = [
     '0ae03219cce4cfaaa30d014b92b41a106ff6dd039f0040504d02f18f1985d149',
     '242584f87e218f54299bfd1ecef97884f715f14305a5d05f78afb9bb92c7bc54'
 ]
+
 INDEX_SIZE = 24
+#inputs, input a1, input b1, input a2, ..... inputb24, continue (0) or stop(1).
+MAX_NUM_INPUTS = INDEX_SIZE * 2 + 2
 
 program.set_bit_length(32)
 
@@ -98,11 +101,16 @@ def connectClients():
     return client_sockets
 
 
-def accumulate_inputs(inputs, index_count, total_count):
-    for j in range(INDEX_SIZE):
+def accumulate_inputs(slength, inputs, index_count, total_count):
+    # TODO how to accumulate without revealing.
+    print_ln('Input length is %s', slength.reveal())
+    for j in range(0, INDEX_SIZE * 2, 2):
 
-        # is it a valid entry or empty
-        is_valid = inputs[j * 2] >= 0
+        # is it a valid entry or to be ignored
+        is_valid = (j + 1) < slength
+
+        print_ln('Processing input posn %s is it valid %s', j,
+                 is_valid.reveal())
 
         @if_(is_valid.reveal() == 1)
         def valid_input():
@@ -114,7 +122,7 @@ def accumulate_inputs(inputs, index_count, total_count):
 
             @for_range(INDEX_SIZE)
             def loop_body(k):
-                is_match = inputs[j * 2] == index_count[k][0]
+                is_match = inputs[j] == index_count[k][0]
                 matchIndex[0] = if_else(is_match, k, matchIndex[0])
                 is_empty = sint(0) == index_count[k][0]
                 emptyIndex[0] = if_else(is_empty, k, emptyIndex[0])
@@ -122,21 +130,21 @@ def accumulate_inputs(inputs, index_count, total_count):
             match_index = regint(matchIndex[0].reveal())
             insert_index = regint(emptyIndex[0].reveal())
             print_ln('Entry %s, %s match_index %s insert_index %s.',
-                     inputs[j * 2].reveal(), inputs[j * 2 + 1].reveal(),
-                     match_index, insert_index)
+                     inputs[j].reveal(), inputs[j + 1].reveal(), match_index,
+                     insert_index)
 
-            total_count.write(total_count + inputs[j * 2 + 1])
+            total_count.write(total_count + inputs[j + 1])
 
             @if_e(match_index >= 0)
             def add_to_existing():
-                index_count[match_index][1] += inputs[j * 2 + 1]
+                index_count[match_index][1] += inputs[j + 1]
 
             @else_
             def new_entry():
                 @if_e(insert_index >= 0)
                 def insert_at_end():
-                    index_count[insert_index][0] = inputs[j * 2]
-                    index_count[insert_index][1] = inputs[j * 2 + 1]
+                    index_count[insert_index][0] = inputs[j]
+                    index_count[insert_index][1] = inputs[j + 1]
 
                 @else_
                 def accumulate_problem():
@@ -158,22 +166,28 @@ def main():
     def calc_loop():
         print_ln('Starting a new % calculation.')
 
-        # Clients secret input - INDEX_SIZE * 2 (index and cnt)
+        # Clients secret input - index and cnt for each row
         index_count = Matrix(INDEX_SIZE, 2, sint)
         index_count.assign_all(0)
 
         total_count = MemValue(sint(0))
 
         for i in range(NUM_CLIENTS):
-            # Block on user input, i.e. don't send shares until client requests.
-            # Can be used to indicate go or exit out of this calc.
-            shareCount = regint.read_from_socket(client_sockets[i])
-            print_ln('Requested %s shares.', shareCount)
 
-            inputs = sint.receive_from_client(INDEX_SIZE * 2,
-                                              client_sockets[i],
-                                              ClientMessageType.TripleShares)
-            accumulate_inputs(inputs, index_count, total_count)
+            @do_while
+            def batch_input():
+                # Block on user input, i.e. don't send shares until client requests.
+                # Can be used to indicate go or exit out of this calc.
+                shareCount = regint.read_from_socket(client_sockets[i])
+                print_ln('Requested %s shares.', shareCount)
+
+                inputs = sint.receive_from_client(
+                    MAX_NUM_INPUTS, client_sockets[i],
+                    ClientMessageType.TripleShares)
+                accumulate_inputs(inputs[0], inputs[1:-1], index_count,
+                                  total_count)
+
+                return inputs[MAX_NUM_INPUTS - 1].reveal() == 0
 
         # populate index_percent as results (sint -> sfix, division, sfix -> cfix)
         total_count_sfix = sfix()
@@ -196,7 +210,7 @@ def main():
 
         for i in range(NUM_CLIENTS):
             cfix.write_to_socket(client_sockets[i], index_percent,
-                                 ClientMessageType.ClearModpFix, True)
+                                 ClientMessageType.ClearModpFix)
 
         return 1
 

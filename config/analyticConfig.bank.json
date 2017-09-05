@@ -42,7 +42,7 @@
         }
       ],
       "inputRowCount": {
-        "bufferSize": 1,
+        "rowBufferSize": 1,
         "batched": false
       },
       "outputs": [
@@ -72,7 +72,7 @@
         }
       ],
       "inputRowCount": {
-        "bufferSize": 24,
+        "rowBufferSize": 24,
         "batched": false
       },
       "outputs": [
@@ -107,7 +107,7 @@
         }
       ],
       "inputRowCount": {
-        "bufferSize": 100,
+        "rowBufferSize": 100,
         "batched": true
       },
       "outputs": [

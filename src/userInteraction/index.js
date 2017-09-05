@@ -5,7 +5,6 @@
 
 const logger = require('../support/logging')
 const Io = require('socket.io')
-const assert = require('assert')
 const extractDbValues = require('./extractDbValues')
 const spdz = require('../spdz')
 
@@ -46,7 +45,7 @@ const runQuery = (socket, msg) => {
       serverName: serverName
     })
   } else if (busySocket !== undefined) {
-    const errMsg = `Unable to run the analytics query, engine is busy.`
+    const errMsg = 'Unable to run the analytics query, engine is busy.'
     logger.debug(errMsg)
     socket.emit('runQueryResult', {
       msg: errMsg,
@@ -93,11 +92,27 @@ const runQueryReset = socket => {
 }
 
 /**
+ * Process an array of input values sequentially using
+ * function processInput which must return a promise.
+ * 
+ * @param {Array<Array>} inputChunks an array of input values
+ * @param {function} sendInput function which accepts an array of numbers and returns a promise 
+ * 
+ * @returns {Promise} promise with no parameter to indicate success or failure
+ */
+const sendInputDataInBatches = (inputChunks, sendInput) => {
+  return inputChunks.reduce((lastPromise, dataChunk) => {
+    return lastPromise.then(() => sendInput(dataChunk))
+  }, Promise.resolve())
+}
+
+/**
  * Client has instructed DB values to be sent to SPDZ engines to run analytic query.
  */
 const goSpdz = socket => {
   if (busySocket === undefined || busySocket.id !== socket.id) {
-    const errMsg = `Unable to dispatch the analytics query to SPDZ. You are not the active query.`
+    const errMsg =
+      'Unable to dispatch the analytics query to SPDZ. You are not the active query.'
     logger.debug(errMsg)
     socket.emit('goSpdzResult', {
       msg: errMsg,
@@ -105,7 +120,8 @@ const goSpdz = socket => {
       serverName: serverName
     })
   } else if (dbValues.length === 0) {
-    const errMsg = `Unable to dispatch the analytics query to SPDZ. There is no DB query.`
+    const errMsg =
+      'Unable to dispatch the analytics query to SPDZ. There is no DB query.'
     logger.debug(errMsg)
     socket.emit('goSpdzResult', {
       msg: errMsg,
@@ -113,15 +129,14 @@ const goSpdz = socket => {
       serverName: serverName
     })
   } else {
-    //TODO
-    spdz
-      .requestShares(dbValues.length)
-      .then(() => {
-        return spdz.sendSecretInputs(dbValues)
+    sendInputDataInBatches(dbValues, dataChunk =>
+      spdz.requestShares(dataChunk.length).then(() => {
+        return spdz.sendSecretInputs(dataChunk)
       })
+    )
       .then(() => {
         dbValues = []
-        const successMsg = `Succesfully sent analytics query to SPDZ.`
+        const successMsg = 'Succesfully sent analytics query to SPDZ.'
         logger.debug(successMsg)
         socket.emit('goSpdzResult', {
           msg: successMsg,

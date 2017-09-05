@@ -14,6 +14,8 @@ CLIENT_PUBLIC_KEYS = [
     '0ae03219cce4cfaaa30d014b92b41a106ff6dd039f0040504d02f18f1985d149',
     '242584f87e218f54299bfd1ecef97884f715f14305a5d05f78afb9bb92c7bc54'
 ]
+#inputs, input 1, input2, continue (0) or stop(1) value.
+MAX_NUM_INPUTS = 4
 
 program.set_bit_length(32)
 
@@ -115,15 +117,25 @@ def main():
         accumulator.assign_all(0)
 
         for i in range(NUM_CLIENTS):
-            shareCount = regint.read_from_socket(client_sockets[i])
-            print_ln('Requested %s shares.', shareCount)
 
-            input_share = sint.receive_from_client(
-                2, client_sockets[i], ClientMessageType.TripleShares)
-            accumulator[0] = accumulator[0] + input_share[0]
-            accumulator[1] = accumulator[1] + input_share[1]
-            print_ln('Current total %s count %s from clients.',
-                     accumulator[0].reveal(), accumulator[1].reveal())
+            @do_while
+            def batch_input():
+                shareCount = regint.read_from_socket(client_sockets[i])
+                print_ln('Requested %s shares.', shareCount)
+
+                input_share = sint.receive_from_client(
+                    MAX_NUM_INPUTS, client_sockets[i],
+                    ClientMessageType.TripleShares)
+
+                print_ln('Batch input count %s', input_share[0].reveal())
+
+                accumulator[0] = accumulator[0] + input_share[1]
+                accumulator[1] = accumulator[1] + input_share[2]
+
+                print_ln('Current total %s count %s from clients.',
+                         accumulator[0].reveal(), accumulator[1].reveal())
+
+                return input_share[MAX_NUM_INPUTS - 1].reveal() == 0
 
         # do calc
         sum_float = sfix()
@@ -140,7 +152,7 @@ def main():
 
         for i in range(NUM_CLIENTS):
             cfix.write_to_socket(client_sockets[i], results,
-                                 ClientMessageType.ClearModpFix, True)
+                                 ClientMessageType.ClearModpFix)
 
         return 1
 
