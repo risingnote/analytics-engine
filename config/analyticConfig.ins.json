@@ -107,7 +107,7 @@
         }
       ],
       "inputRowCount": {
-        "rowBufferSize": 50,
+        "rowBufferSize": 30,
         "batched": false
       },
       "outputs": [
@@ -117,12 +117,12 @@
           "byteSize": 16
         },
         {
-          "name": "ySumQuantity",
+          "name": "y%Quantity",
           "type": "float",
           "byteSize": 16
         }
       ],
-      "outputRowCount": 50
+      "outputRowCount": 31
     }
   ]
 }

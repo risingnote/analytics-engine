@@ -1,0 +1,238 @@
+"""
+Analytics function to join 2 sets of values and sum the results before converting into a % distribution.
+e.g. client 0 provides identifier, lookupvalue; client 1 provides identifier, amount.
+     result is sum(amount) by lookupvalue as a %.
+"""
+
+from Compiler.types import Array, Matrix, sint, regint, sfix, cfix, MemValue, ClientMessageType
+from Compiler.instructions import listen, acceptclientconnection
+from Compiler.library import do_while, if_, if_e, else_, print_ln, for_range
+from Compiler.util import if_else
+
+PORTNUM = 14000
+NUM_CLIENTS = 2
+# Order of public keys will be used to force order of client connections
+# Here want lookup data first so order is important.
+CLIENT_PUBLIC_KEYS = [
+    '242584f87e218f54299bfd1ecef97884f715f14305a5d05f78afb9bb92c7bc54',
+    '0ae03219cce4cfaaa30d014b92b41a106ff6dd039f0040504d02f18f1985d149'
+]
+
+LOOKUP_SIZE = 30
+MAX_NUM_LOOKUP = LOOKUP_SIZE * 2 + 2
+
+BATCH_SIZE = 50
+MAX_NUM_INPUTS = BATCH_SIZE * 2 + 2
+
+program.set_bit_length(32)
+
+
+def reformat_public_key(key_hex):
+    """Convert authorised public key from hex string into list of 8 signed 32 bit ints,
+       ready for later validation."""
+    public_key_list = [key_hex[i:i + 8] for i in range(0, len(key_hex), 8)]
+
+    def hex_to_signed(hex_int):
+        """Convert hex byte into signed int"""
+        int_val = int(hex_int, 16)
+        if int_val > 0x7FFFFFFF:
+            int_val -= 0x100000000
+        return int_val
+
+    return map(hex_to_signed, public_key_list)
+
+
+def validate_client_connection(public_key, valid_public_key_list):
+    """Compare public_key against the list of valid keys.
+       Return position in list or -1 if not valid."""
+
+    def validate_public_key(test_key, valid_key):
+        """Compare each int of test_key against valid_key.
+           Returns 1 if valid, else 0."""
+
+        validation_count = 0
+
+        for index, keypart in enumerate(test_key):
+            matches = keypart == valid_key[index]
+            validation_count += if_else(matches, 1, 0)
+
+        return validation_count == 8
+
+    client_posn = -1
+    for index, valid_public_key in enumerate(valid_public_key_list):
+        valid = validate_public_key(public_key, valid_public_key)
+        client_posn = if_else(valid == 1, index, client_posn)
+
+    return client_posn
+
+
+def connectClients():
+    """Wait until 2 valid (based on public key) clients have connected."""
+    client_sockets = Array(NUM_CLIENTS, regint)
+    number_clients = MemValue(regint(0))
+
+    valid_public_key_list = [
+        reformat_public_key(key_string) for key_string in CLIENT_PUBLIC_KEYS
+    ]
+
+    @do_while
+    def client_connection():
+        """Wait for a client to connect, validate key and put into correct slot."""
+        client_socket_id = regint()
+        print_ln('Waiting for client connection...')
+        acceptclientconnection(client_socket_id, PORTNUM)
+        public_key = regint.read_client_public_key(client_socket_id)
+
+        # Order of clients connecting must be the same across SPDZ engines, or share distribution fails.
+        client_posn = validate_client_connection(public_key,
+                                                 valid_public_key_list)
+
+        @if_e(client_posn < 0)
+        def invalid_client():
+            print_ln('Validation of connecting client public key failed.')
+
+        @else_
+        def valid_client():
+            client_sockets[client_posn] = client_socket_id
+
+            number_clients.write(number_clients + 1)
+            print_ln(
+                'Validation of connecting client public key succeeded, client order is %s, client count is %s.',
+                client_posn, number_clients)
+
+        return number_clients < NUM_CLIENTS
+
+    return client_sockets
+
+
+def store_lookup(slength, inputs, lookup):
+    # TODO why complaining about regint v int as list index - because inputs is python [] not an Array
+    # @for_range(0, LOOKUP_SIZE * 2, 2)
+    # def loop_body(j):
+    for j in range(LOOKUP_SIZE):
+        # is it a valid entry or to be ignored
+        is_valid = j < slength
+        lookup[j][0] = if_else(is_valid, inputs[j * 2], lookup[j][0])
+        lookup[j][1] = if_else(is_valid, inputs[j * 2 + 1], lookup[j][1])
+
+
+def lookup_accumulate_inputs(slength, inputs, lookup, accumulator,
+                             total_count):
+    for j in range(0, BATCH_SIZE * 2, 2):
+
+        # is it a valid entry or to be ignored
+        is_valid = (j + 1) < slength
+
+        @if_(is_valid.reveal() == 1)
+        def valid_input():
+            # Find index in lookup_data where identifier matches
+            match_found = Array(1, sint)
+            match_found[0] = sint(0)
+
+            @for_range(LOOKUP_SIZE)
+            def loop_body(k):
+                is_match = inputs[j] == lookup[k][0]
+                accumulator[k] = if_else(
+                    is_match, accumulator[k] + inputs[j + 1], accumulator[k])
+                match_found[0] = if_else(is_match, is_match, match_found[0])
+
+            print_ln('Entry %s, %s match_found %s.', inputs[j].reveal(),
+                     inputs[j + 1].reveal(), match_found[0].reveal())
+
+            total_count.write(total_count + inputs[j + 1])
+
+            accumulator[LOOKUP_SIZE] = if_else(
+                match_found[0], accumulator[LOOKUP_SIZE],
+                accumulator[LOOKUP_SIZE] + inputs[j + 1])
+
+
+def main():
+
+    listen(PORTNUM)
+    print_ln('Listening for client connections on base port %s', PORTNUM)
+
+    client_sockets = connectClients()
+
+    sfix.set_precision(10, 41)
+    cfix.set_precision(10, 41)
+
+    @do_while
+    def calc_loop():
+        print_ln('Starting a new sum by lookup calculation.')
+
+        # Lookup data from client 0, identifier, lookup value
+        lookup_data = Matrix(LOOKUP_SIZE, 2, sint)
+        lookup_data.assign_all(0)
+
+        # Accumulated client 1 input - store amount, lookup value is inferred by index posn.
+        # + 1 for storing unmatched lookups
+        accumulator = Array(LOOKUP_SIZE + 1, sint)
+        accumulator.assign_all(0)
+
+        total_count = MemValue(sint(0))
+
+        # First client provides lookup data
+        # Block on user input, i.e. don't send shares until client requests.
+        shareCount = regint.read_from_socket(client_sockets[0])
+        print_ln('Lookup, requested %s shares.', shareCount)
+
+        lookup_input = sint.receive_from_client(
+            MAX_NUM_LOOKUP, client_sockets[0], ClientMessageType.TripleShares)
+
+        store_lookup(lookup_input[0], lookup_input[1:-1], lookup_data)
+
+        # Second client provides batched input
+        @do_while
+        def batch_input():
+            # Block on user input, i.e. don't send shares until client requests.
+            shareCount = regint.read_from_socket(client_sockets[1])
+            print_ln('Input, requested %s shares.', shareCount)
+
+            inputs = sint.receive_from_client(MAX_NUM_INPUTS,
+                                              client_sockets[1],
+                                              ClientMessageType.TripleShares)
+
+            lookup_accumulate_inputs(inputs[0], inputs[1:-1], lookup_data,
+                                     accumulator, total_count)
+
+            return inputs[MAX_NUM_INPUTS - 1].reveal() == 0
+
+        # populate index_percent as results (sint -> sfix, division, sfix -> cfix)
+        total_count_sfix = sfix()
+        total_count_sfix.load_int(total_count)
+        index_percent = Array(LOOKUP_SIZE * 2 + 2, cfix)
+        print_ln('Results total %s.', total_count_sfix.reveal())
+
+        for i in range(LOOKUP_SIZE):
+            # can't load_int into cfix in an Array
+            index_cfix = cfix()
+            index_cfix.load_int(lookup_data[i][1].reveal())
+            index_percent[i * 2] = index_cfix
+
+            count_sfix = sfix()
+            count_sfix.load_int(accumulator[i])
+            index_percent[i * 2 + 1] = (count_sfix / total_count_sfix).reveal()
+
+            print_ln('Results entry %s: index %s count %s.', i,
+                     index_percent[i * 2], index_percent[i * 2 + 1])
+
+        # Handle no match values separately
+        index_percent[LOOKUP_SIZE * 2] = cfix(-1)
+
+        count_sfix = sfix()
+        count_sfix.load_int(accumulator[LOOKUP_SIZE])
+        index_percent[LOOKUP_SIZE * 2 +
+                      1] = (count_sfix / total_count_sfix).reveal()
+
+        print_ln('Results entry no match: index %s count %s.',
+                 index_percent[LOOKUP_SIZE * 2],
+                 index_percent[LOOKUP_SIZE * 2 + 1])
+
+        for i in range(NUM_CLIENTS):
+            cfix.write_to_socket(client_sockets[i], index_percent,
+                                 ClientMessageType.ClearModpFix)
+
+        return 1
+
+
+main()
