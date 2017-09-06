@@ -102,15 +102,10 @@ def connectClients():
 
 
 def accumulate_inputs(slength, inputs, index_count, total_count):
-    # TODO how to accumulate without revealing.
-    print_ln('Input length is %s', slength.reveal())
     for j in range(0, INDEX_SIZE * 2, 2):
 
         # is it a valid entry or to be ignored
         is_valid = (j + 1) < slength
-
-        print_ln('Processing input posn %s is it valid %s', j,
-                 is_valid.reveal())
 
         @if_(is_valid.reveal() == 1)
         def valid_input():
@@ -184,6 +179,7 @@ def main():
                 inputs = sint.receive_from_client(
                     MAX_NUM_INPUTS, client_sockets[i],
                     ClientMessageType.TripleShares)
+
                 accumulate_inputs(inputs[0], inputs[1:-1], index_count,
                                   total_count)
 
