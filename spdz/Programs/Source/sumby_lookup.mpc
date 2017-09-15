@@ -105,23 +105,30 @@ def connectClients():
     return client_sockets
 
 
-def store_lookup(slength, inputs, lookup):
-    # TODO why complaining about regint v int as list index - because inputs is python [] not an Array
-    # @for_range(0, LOOKUP_SIZE * 2, 2)
-    # def loop_body(j):
-    for j in range(LOOKUP_SIZE):
+def store_lookup(input_count, inputs, lookup):
+    """Store the inputs into the lookup structure, only storing valid inputs"""
+
+    # Transfer inputs into an Array structure
+    #  or compiler complains 'list indices must be integers, not regint'
+    #  don't understand why this is not also needed in lookup_accumulate_inputs
+    input_array = Array(LOOKUP_SIZE * 2, sint)
+    for i, inp_value in enumerate(inputs):
+        input_array[i] = inp_value
+
+    @for_range(LOOKUP_SIZE)
+    def loop_body(j):
         # is it a valid entry or to be ignored
-        is_valid = j < slength
-        lookup[j][0] = if_else(is_valid, inputs[j * 2], lookup[j][0])
-        lookup[j][1] = if_else(is_valid, inputs[j * 2 + 1], lookup[j][1])
+        is_valid = (j * 2 + 1) < input_count
+        lookup[j][0] = if_else(is_valid, input_array[j * 2], lookup[j][0])
+        lookup[j][1] = if_else(is_valid, input_array[j * 2 + 1], lookup[j][1])
 
 
-def lookup_accumulate_inputs(slength, inputs, lookup, accumulator,
+def lookup_accumulate_inputs(input_count, inputs, lookup, accumulator,
                              total_count):
-    for j in range(0, BATCH_SIZE * 2, 2):
+    for j in range(0, BATCH_SIZE):
 
         # is it a valid entry or to be ignored
-        is_valid = (j + 1) < slength
+        is_valid = (j * 2 + 1) < input_count
 
         @if_(is_valid.reveal() == 1)
         def valid_input():
@@ -131,19 +138,21 @@ def lookup_accumulate_inputs(slength, inputs, lookup, accumulator,
 
             @for_range(LOOKUP_SIZE)
             def loop_body(k):
-                is_match = inputs[j] == lookup[k][0]
-                accumulator[k] = if_else(
-                    is_match, accumulator[k] + inputs[j + 1], accumulator[k])
+                is_match = inputs[j * 2] == lookup[k][0]
+                accumulator[k] = if_else(is_match,
+                                         accumulator[k] + inputs[j * 2 + 1],
+                                         accumulator[k])
                 match_found[0] = if_else(is_match, is_match, match_found[0])
 
-            print_ln('Entry %s, %s match_found %s.', inputs[j].reveal(),
-                     inputs[j + 1].reveal(), match_found[0].reveal())
+            print_ln('Entry %s, %s match_found %s.', inputs[j * 2].reveal(),
+                     inputs[j * 2 + 1].reveal(), match_found[0].reveal())
 
-            total_count.write(total_count + inputs[j + 1])
+            total_count.write(total_count + inputs[j * 2 + 1])
 
+            # store unmatched input
             accumulator[LOOKUP_SIZE] = if_else(
                 match_found[0], accumulator[LOOKUP_SIZE],
-                accumulator[LOOKUP_SIZE] + inputs[j + 1])
+                accumulator[LOOKUP_SIZE] + inputs[j * 2 + 1])
 
 
 def main():
@@ -217,7 +226,7 @@ def main():
                      index_percent[i * 2], index_percent[i * 2 + 1])
 
         # Handle no match values separately
-        index_percent[LOOKUP_SIZE * 2] = cfix(-1)
+        index_percent[LOOKUP_SIZE * 2] = cfix(LOOKUP_SIZE)
 
         count_sfix = sfix()
         count_sfix.load_int(accumulator[LOOKUP_SIZE])

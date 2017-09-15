@@ -11,7 +11,12 @@
     "type": "git",
     "url": "git+https://github.com/bristolcrypto/analytics-engine.git"
   },
-  "keywords": ["spdz", "uob", "analytics", "demonstrators"],
+  "keywords": [
+    "spdz",
+    "uob",
+    "analytics",
+    "demonstrators"
+  ],
   "author": "Jonathan Evans",
   "license": "SEE LICENSE IN License.txt",
   "bugs": {
