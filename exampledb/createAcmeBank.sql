@@ -30,9 +30,63 @@ create table cyberFraud (
   ); 
 
 # Sample data
-insert into cyberFraud() values(null, '12', inet_aton('100.200.127.4'), date_format('2017-01-18 15:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '32', inet_aton('100.200.127.4'), date_format('2017-01-18 15:22:03', '%Y-%m-%d %H:%i:%S'));
 insert into cyberFraud() values(null, '25', inet_aton('100.200.127.5'), date_format('2017-01-18 20:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '16', inet_aton('100.200.127.5'), date_format('2017-01-18 19:22:03', '%Y-%m-%d %H:%i:%S'));
 insert into cyberFraud() values(null, '53', inet_aton('100.200.127.6'), date_format('2017-01-18 23:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '31', inet_aton('100.200.127.6'), date_format('2017-01-19 23:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '09', inet_aton('100.200.127.7'), date_format('2017-01-20 18:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '10', inet_aton('100.200.127.8'), date_format('2017-01-20 18:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '20', inet_aton('100.200.127.8'), date_format('2017-01-20 19:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '30', inet_aton('100.200.127.8'), date_format('2017-01-20 20:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '25', inet_aton('200.200.127.1'), date_format('2017-01-20 19:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '25', inet_aton('200.200.127.1'), date_format('2017-01-20 19:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '25', inet_aton('200.200.127.2'), date_format('2017-01-20 16:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '37', inet_aton('200.200.127.3'), date_format('2017-01-21 20:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '42', inet_aton('200.200.127.4'), date_format('2017-01-21 14:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '16', inet_aton('200.200.127.4'), date_format('2017-01-21 23:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '88', inet_aton('200.200.127.5'), date_format('2017-01-21 21:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '99', inet_aton('64.63.87.112'), date_format('2017-02-21 04:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '23', inet_aton('64.63.87.113'), date_format('2017-02-21 04:25:25', '%Y-%m-%d %H:%i:%S'));
+
+insert into cyberFraud() values(null, '32', inet_aton('100.200.127.4'), date_format('2017-01-18 15:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '25', inet_aton('100.200.127.5'), date_format('2017-01-18 20:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '16', inet_aton('100.200.127.5'), date_format('2017-01-18 19:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '53', inet_aton('100.200.127.6'), date_format('2017-01-18 23:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '31', inet_aton('100.200.127.6'), date_format('2017-01-19 23:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '09', inet_aton('100.200.127.7'), date_format('2017-01-20 18:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '10', inet_aton('100.200.127.8'), date_format('2017-01-20 18:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '20', inet_aton('100.200.127.8'), date_format('2017-01-20 19:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '30', inet_aton('100.200.127.8'), date_format('2017-01-20 20:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '25', inet_aton('200.200.127.1'), date_format('2017-01-20 19:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '25', inet_aton('200.200.127.1'), date_format('2017-01-20 19:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '25', inet_aton('200.200.127.2'), date_format('2017-01-20 16:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '37', inet_aton('200.200.127.3'), date_format('2017-01-21 20:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '42', inet_aton('200.200.127.4'), date_format('2017-01-21 14:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '16', inet_aton('200.200.127.4'), date_format('2017-01-21 23:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '88', inet_aton('200.200.127.5'), date_format('2017-01-21 21:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '99', inet_aton('64.63.87.112'), date_format('2017-02-21 04:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '23', inet_aton('64.63.87.113'), date_format('2017-02-21 04:25:25', '%Y-%m-%d %H:%i:%S'));
+
+insert into cyberFraud() values(null, '32', inet_aton('100.200.127.4'), date_format('2017-01-18 15:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '25', inet_aton('100.200.127.5'), date_format('2017-01-18 20:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '16', inet_aton('100.200.127.5'), date_format('2017-01-18 19:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '53', inet_aton('100.200.127.6'), date_format('2017-01-18 23:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '31', inet_aton('100.200.127.6'), date_format('2017-01-19 23:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '109', inet_aton('100.200.127.7'), date_format('2017-01-20 18:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '10', inet_aton('100.200.127.8'), date_format('2017-01-20 18:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '20', inet_aton('100.200.127.8'), date_format('2017-01-20 19:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '30', inet_aton('100.200.127.8'), date_format('2017-01-20 20:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '25', inet_aton('200.200.127.1'), date_format('2017-01-20 19:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '25', inet_aton('200.200.127.1'), date_format('2017-01-20 19:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '25', inet_aton('200.200.127.2'), date_format('2017-01-20 16:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '37', inet_aton('200.200.127.3'), date_format('2017-01-21 20:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '42', inet_aton('200.200.127.4'), date_format('2017-01-21 14:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '16', inet_aton('200.200.127.4'), date_format('2017-01-21 23:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '88', inet_aton('200.200.127.5'), date_format('2017-01-21 21:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '99', inet_aton('64.63.87.112'), date_format('2017-02-21 04:22:03', '%Y-%m-%d %H:%i:%S'));
+insert into cyberFraud() values(null, '23', inet_aton('64.63.87.113'), date_format('2017-02-21 04:25:25', '%Y-%m-%d %H:%i:%S'));
+
 
 #=================================================================
 # Schema to hold read only views, access from analytics engine.

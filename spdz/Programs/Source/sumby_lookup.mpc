@@ -132,27 +132,52 @@ def lookup_accumulate_inputs(input_count, inputs, lookup, accumulator,
 
         @if_(is_valid.reveal() == 1)
         def valid_input():
-            # Find index in lookup_data where identifier matches
-            match_found = Array(1, sint)
-            match_found[0] = sint(0)
+            lookup_id = Array(1, sint)
+            lookup_id[0] = sint(-1)
 
             @for_range(LOOKUP_SIZE)
-            def loop_body(k):
+            def lookup_for_id(k):
+                """Find id in lookup_data where lookup value matches"""
                 is_match = inputs[j * 2] == lookup[k][0]
-                accumulator[k] = if_else(is_match,
-                                         accumulator[k] + inputs[j * 2 + 1],
-                                         accumulator[k])
-                match_found[0] = if_else(is_match, is_match, match_found[0])
+                lookup_id[0] = if_else(is_match, lookup[k][1], lookup_id[0])
 
-            print_ln('Entry %s, %s match_found %s.', inputs[j * 2].reveal(),
-                     inputs[j * 2 + 1].reveal(), match_found[0].reveal())
+            matchIndex = Array(1, sint)
+            matchIndex[0] = sint(-1)
+            emptyIndex = Array(1, sint)
+            emptyIndex[0] = sint(-1)
+
+            @for_range(LOOKUP_SIZE + 1)
+            def update_or_insert(l):
+                """Work out if this is an update or an insert"""
+                is_match = accumulator[l][0] == lookup_id[0]
+                matchIndex[0] = if_else(is_match, l, matchIndex[0])
+                is_empty = accumulator[l][0] == sint(0)
+                emptyIndex[0] = if_else(is_empty, l, emptyIndex[0])
+
+            match_index = regint(matchIndex[0].reveal())
+            insert_index = regint(emptyIndex[0].reveal())
+
+            print_ln('Entry %s, %s match_index %s insert_index %s.',
+                     inputs[j * 2].reveal(), inputs[j * 2 + 1].reveal(),
+                     match_index, insert_index)
+
+            @if_e(match_index >= 0)
+            def add_to_existing():
+                accumulator[match_index][1] += inputs[j * 2 + 1]
+
+            @else_
+            def new_entry():
+                @if_e(insert_index >= 0)
+                def insert_at_end():
+                    accumulator[insert_index][0] = lookup_id[0]
+                    accumulator[insert_index][1] = inputs[j * 2 + 1]
+
+                @else_
+                def accumulate_problem():
+                    print_ln(
+                        'Can not accumulate to existing or insert at end.')
 
             total_count.write(total_count + inputs[j * 2 + 1])
-
-            # store unmatched input
-            accumulator[LOOKUP_SIZE] = if_else(
-                match_found[0], accumulator[LOOKUP_SIZE],
-                accumulator[LOOKUP_SIZE] + inputs[j * 2 + 1])
 
 
 def main():
@@ -173,9 +198,9 @@ def main():
         lookup_data = Matrix(LOOKUP_SIZE, 2, sint)
         lookup_data.assign_all(0)
 
-        # Accumulated client 1 input - store amount, lookup value is inferred by index posn.
-        # + 1 for storing unmatched lookups
-        accumulator = Array(LOOKUP_SIZE + 1, sint)
+        # Accumulated client 1 input - store lookup value, amount
+        # + 1 for storing unmatched lookups in last posn
+        accumulator = Matrix(LOOKUP_SIZE + 1, 2, sint)
         accumulator.assign_all(0)
 
         total_count = MemValue(sint(0))
@@ -197,12 +222,20 @@ def main():
             shareCount = regint.read_from_socket(client_sockets[1])
             print_ln('Input, requested %s shares.', shareCount)
 
+            # TODO is it valid to run this in a loop? Don't know in advance how many
+            # times runs - will it be overwriting registers ?
             inputs = sint.receive_from_client(MAX_NUM_INPUTS,
                                               client_sockets[1],
                                               ClientMessageType.TripleShares)
 
             lookup_accumulate_inputs(inputs[0], inputs[1:-1], lookup_data,
                                      accumulator, total_count)
+
+            # TODO this seems oK
+            for z in range(0, LOOKUP_SIZE + 1):
+                print_ln('accumulator row %s x %s y %s', z,
+                         accumulator[z][0].reveal(),
+                         accumulator[z][1].reveal())
 
             return inputs[MAX_NUM_INPUTS - 1].reveal() == 0
 
@@ -212,30 +245,21 @@ def main():
         index_percent = Array(LOOKUP_SIZE * 2 + 2, cfix)
         print_ln('Results total %s.', total_count_sfix.reveal())
 
-        for i in range(LOOKUP_SIZE):
+        for i in range(LOOKUP_SIZE + 1):
             # can't load_int into cfix in an Array
             index_cfix = cfix()
-            index_cfix.load_int(lookup_data[i][1].reveal())
+            index_cfix.load_int(accumulator[i][0].reveal())
             index_percent[i * 2] = index_cfix
 
             count_sfix = sfix()
-            count_sfix.load_int(accumulator[i])
+            count_sfix.load_int(accumulator[i][1])
+            # TODO getting random errors in div.
+            print_ln('Calc % div gives %s',
+                     (count_sfix / total_count_sfix).reveal())
             index_percent[i * 2 + 1] = (count_sfix / total_count_sfix).reveal()
 
-            print_ln('Results entry %s: index %s count %s.', i,
+            print_ln('Results entry %s: index %s % div %s.', i,
                      index_percent[i * 2], index_percent[i * 2 + 1])
-
-        # Handle no match values separately
-        index_percent[LOOKUP_SIZE * 2] = cfix(LOOKUP_SIZE)
-
-        count_sfix = sfix()
-        count_sfix.load_int(accumulator[LOOKUP_SIZE])
-        index_percent[LOOKUP_SIZE * 2 +
-                      1] = (count_sfix / total_count_sfix).reveal()
-
-        print_ln('Results entry no match: index %s count %s.',
-                 index_percent[LOOKUP_SIZE * 2],
-                 index_percent[LOOKUP_SIZE * 2 + 1])
 
         for i in range(NUM_CLIENTS):
             cfix.write_to_socket(client_sockets[i], index_percent,

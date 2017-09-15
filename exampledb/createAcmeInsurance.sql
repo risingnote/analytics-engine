@@ -1,6 +1,6 @@
 #==================================
 # Run as root
-# Imaginary bank private schema 
+# Imaginary insurance private schema 
 #==================================
 drop database if exists acmeinsurance;
 
@@ -45,7 +45,15 @@ create table cyberAttribution (
 
 # Sample data
 insert into cyberAttribution() values(null, inet_aton('100.200.127.4'), 1);
-insert into cyberAttribution() values(null, inet_aton('100.200.127.5'), 2);
+insert into cyberAttribution() values(null, inet_aton('100.200.127.5'), 1);
+insert into cyberAttribution() values(null, inet_aton('100.200.127.6'), 2);
+insert into cyberAttribution() values(null, inet_aton('100.200.127.7'), 2);
+insert into cyberAttribution() values(null, inet_aton('100.200.127.8'), 3);
+insert into cyberAttribution() values(null, inet_aton('200.200.127.1'), 4);
+insert into cyberAttribution() values(null, inet_aton('200.200.127.2'), 4);
+insert into cyberAttribution() values(null, inet_aton('200.200.127.3'), 5);
+insert into cyberAttribution() values(null, inet_aton('200.200.127.4'), 5);
+insert into cyberAttribution() values(null, inet_aton('200.200.127.5'), 6);
 
 #=================================================================
 # Schema to hold read only views, access from analytics engine.
