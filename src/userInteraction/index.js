@@ -58,7 +58,7 @@ const runQuery = (socket, msg) => {
       .then(inputs => {
         dbValues = inputs
         const successMsg = `Succesfully ran analytics query "${msg.query}".`
-        logger.debug(successMsg)
+        logger.debug(`${successMsg} Results ${JSON.stringify(inputs)}.`)
         socket.emit('runQueryResult', {
           msg: successMsg,
           status: STATUS.INFO,
@@ -146,7 +146,7 @@ const goSpdz = socket => {
       })
       .catch(err => {
         dbValues = []
-        const errMsg = `Unable to send analytics query to SPDZ. ${err.message}.`
+        const errMsg = `Unable to send analytics query to SPDZ. ${err.message}`
         logger.debug(errMsg)
         socket.emit('goSpdzResult', {
           msg: errMsg,

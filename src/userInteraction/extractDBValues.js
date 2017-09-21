@@ -1,6 +1,5 @@
 const db = require('../db')
 const spdz = require('../spdz')
-const logger = require('../support/logging')
 
 /**
  * Extract the data and validate sizes against the analytic function. 
@@ -13,8 +12,6 @@ const extractDBValues = (query, analyticFunc) => {
   return db
     .runQuery(query)
     .then(data => {
-      logger.debug(`Run full query returned data ${JSON.stringify(data)}.`)
-
       try {
         spdz.verifyQuery(Object.keys(data[0]).length, data.length, analyticFunc)
         return data

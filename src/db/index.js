@@ -64,7 +64,6 @@ const runQuery = (sqlQuery, limit = false) => {
   return dbConnection
     .raw(sqlQuery + (limit ? ' limit 1' : ''))
     .then(results => {
-      logger.debug('raw db results ', results)
       // First array element is array of results
       return results[0]
     })
