@@ -36,7 +36,12 @@ spdz
   )
   .then(streams => {
     logger.info('Connected successfully to SPDZ engines.')
-    const [spdzResultStream, spdzErrorStream] = streams
+    const [connectedStatusStream, spdzResultStream, spdzErrorStream] = streams
+    connectedStatusStream.onValue(status => {
+      logger.debug(
+        `SPDZ combined connected status ${status.responseType} connected ${status.connected}.`
+      )
+    })
     spdzResultStream.onValue(valueList => {
       logger.debug('SPDZ outputs message.', valueList)
       userInteraction.notifyResult(valueList)
