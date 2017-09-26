@@ -6,7 +6,12 @@
 const logger = require('../support/logging')
 const Io = require('socket.io')
 const extractDbValues = require('./extractDbValues')
-const spdz = require('../spdz')
+const {
+  connectToSpdzEngine,
+  getFunction,
+  requestShares,
+  sendSecretInputs
+} = require('../spdz')
 
 const STATUS = {
   GOOD: 0,
@@ -34,7 +39,7 @@ const setBusySocket = socket => {
  * @param {Object} msg {query: 'string containing valid SQL', analyticFuncId id of analytic function to run} 
  */
 const runQuery = (socket, msg) => {
-  const analysisFunction = spdz.getFunction(msg.analyticFuncId)
+  const analysisFunction = getFunction(msg.analyticFuncId)
 
   if (analysisFunction === undefined) {
     const errMsg = `Requested analytic function ${msg.analyticFuncId} is not found.`
@@ -93,7 +98,7 @@ const runQueryReset = socket => {
 
 /**
  * Process an array of input values sequentially using
- * function processInput which must return a promise.
+ * function sendInput which must return a promise.
  * 
  * @param {Array<Array>} inputChunks an array of input values
  * @param {function} sendInput function which accepts an array of numbers and returns a promise 
@@ -129,11 +134,14 @@ const goSpdz = socket => {
       serverName: serverName
     })
   } else {
-    sendInputDataInBatches(dbValues, dataChunk =>
-      spdz.requestShares(dataChunk.length).then(() => {
-        return spdz.sendSecretInputs(dataChunk)
+    connectToSpdzEngine()
+      .then(() => {
+        return sendInputDataInBatches(dbValues, dataChunk =>
+          requestShares(dataChunk.length).then(() => {
+            return sendSecretInputs(dataChunk)
+          })
+        )
       })
-    )
       .then(() => {
         dbValues = []
         const successMsg = 'Succesfully sent analytics query to SPDZ.'
@@ -182,7 +190,9 @@ const init = (httpServer, friendlyName) => {
   const io = new Io(httpServer, { path: '/analytics/socket.io' })
   ns = io.of('/analytics')
   serverName = friendlyName
-  logger.info('Listening for web socket connections.')
+  logger.info(
+    'Listening for client web socket connections on /analytics/socket.io'
+  )
 
   ns.on('connection', socket => {
     logger.debug(`Got client socket connection ${socket.id}.`)

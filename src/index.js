@@ -11,7 +11,7 @@ const http = require('http')
 const webRouting = require('./webRouting')
 
 const db = require('./db')
-const spdz = require('./spdz')
+const { connectToSpdzProxy } = require('./spdz')
 const userInteraction = require('./userInteraction')
 // const simulateQuery = require('./userInteraction/simulateQuery')
 
@@ -27,15 +27,14 @@ logger.info('Starting analytics engine.')
 // Read only operation - rerunnable.
 db.initConnection(config.dbConfig)
 
-// At startup connect to SPDZ proxies, what about reconnects?
-spdz
-  .connectToSpdz(
-    config.spdzProxy,
-    config.clientX25519,
-    config.analysisFunctions
-  )
+// At startup connect to SPDZ proxies
+connectToSpdzProxy(
+  config.spdzProxy,
+  config.clientX25519,
+  config.analysisFunctions
+)
   .then(streams => {
-    logger.info('Connected successfully to SPDZ engines.')
+    logger.info('Connected successfully to SPDZ proxies.')
     const [connectedStatusStream, spdzResultStream, spdzErrorStream] = streams
     connectedStatusStream.onValue(status => {
       logger.debug(
@@ -52,7 +51,7 @@ spdz
     })
   })
   .catch(err => {
-    logger.warn(`Unable to connect to SPDZ engines. ${err.message}.`)
+    logger.warn(`Unable to connect to SPDZ proxies. ${err.message}.`)
   })
 
 // Serve client web requests
@@ -70,7 +69,9 @@ const webServer = http.createServer(app)
 userInteraction.init(webServer, config.friendlyName)
 
 webServer.listen(httpPortNum, () => {
-  logger.info(`Serving Analytics Engine API on port ${httpPortNum}.`)
+  logger.info(
+    `Serving Analytics Engine REST and Sockets API on port ${httpPortNum}.`
+  )
 })
 
 // simulateQuery()

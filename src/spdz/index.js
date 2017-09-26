@@ -9,13 +9,15 @@ const exitHook = require('../support/exitHook')
 const logger = require('../support/logging')
 
 let funcDefinitions = []
+let clientPublicKey
 
 const getFunction = funcId => {
   return funcDefinitions.find(func => func.id === funcId)
 }
 
-const connectToSpdz = (proxyConfig, clientDhKeyPair, analFuncs) => {
+const connectToSpdzProxy = (proxyConfig, clientDhKeyPair, analFuncs) => {
   funcDefinitions = analFuncs
+  clientPublicKey = clientDhKeyPair.publicKey
   spdzGuiLib.setDHKeyPair(clientDhKeyPair.publicKey, clientDhKeyPair.privateKey)
   const spdzProxyList = proxyConfig.spdzProxyList.map(spdzProxy => {
     return {
@@ -24,11 +26,11 @@ const connectToSpdz = (proxyConfig, clientDhKeyPair, analFuncs) => {
     }
   })
 
-  return spdzGuiLib.connectToSpdzPromise(
-    spdzProxyList,
-    {},
-    clientDhKeyPair.publicKey
-  )
+  return spdzGuiLib.connectToSpdzProxyPromise(spdzProxyList, {})
+}
+
+const connectToSpdzEngine = (reconnect = true) => {
+  return spdzGuiLib.connectToSpdzPartyPromise(clientPublicKey, reconnect)
 }
 
 const sendSecretInputs = inputList => {
@@ -75,11 +77,10 @@ exitHook(() => {
     )
 })
 
-module.exports = {
-  connectToSpdz: connectToSpdz,
-  formatInput: formatInput,
-  getFunction: getFunction,
-  requestShares: requestShares,
-  sendSecretInputs: sendSecretInputs,
-  verifyQuery: verifyQuery
-}
+module.exports.connectToSpdzEngine = connectToSpdzEngine
+module.exports.connectToSpdzProxy = connectToSpdzProxy
+module.exports.formatInput = formatInput
+module.exports.getFunction = getFunction
+module.exports.requestShares = requestShares
+module.exports.sendSecretInputs = sendSecretInputs
+module.exports.verifyQuery = verifyQuery
