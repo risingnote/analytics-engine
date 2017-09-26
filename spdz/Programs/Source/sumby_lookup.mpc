@@ -157,10 +157,6 @@ def lookup_accumulate_inputs(input_count, inputs, lookup, accumulator,
             match_index = regint(matchIndex[0].reveal())
             insert_index = regint(emptyIndex[0].reveal())
 
-            print_ln('Entry %s, %s match_index %s insert_index %s.',
-                     inputs[j * 2].reveal(), inputs[j * 2 + 1].reveal(),
-                     match_index, insert_index)
-
             @if_e(match_index >= 0)
             def add_to_existing():
                 accumulator[match_index][1] += inputs[j * 2 + 1]
@@ -187,8 +183,8 @@ def main():
 
     client_sockets = connectClients()
 
-    sfix.set_precision(10, 41)
-    cfix.set_precision(10, 41)
+    sfix.set_precision(20, 40)
+    cfix.set_precision(20, 40)
 
     @do_while
     def calc_loop():
@@ -222,8 +218,6 @@ def main():
             shareCount = regint.read_from_socket(client_sockets[1])
             print_ln('Input, requested %s shares.', shareCount)
 
-            # TODO is it valid to run this in a loop? Don't know in advance how many
-            # times runs - will it be overwriting registers ?
             inputs = sint.receive_from_client(MAX_NUM_INPUTS,
                                               client_sockets[1],
                                               ClientMessageType.TripleShares)
@@ -231,19 +225,13 @@ def main():
             lookup_accumulate_inputs(inputs[0], inputs[1:-1], lookup_data,
                                      accumulator, total_count)
 
-            # TODO this seems oK
-            for z in range(0, LOOKUP_SIZE + 1):
-                print_ln('accumulator row %s x %s y %s', z,
-                         accumulator[z][0].reveal(),
-                         accumulator[z][1].reveal())
-
             return inputs[MAX_NUM_INPUTS - 1].reveal() == 0
 
         # populate index_percent as results (sint -> sfix, division, sfix -> cfix)
         total_count_sfix = sfix()
         total_count_sfix.load_int(total_count)
+
         index_percent = Array(LOOKUP_SIZE * 2 + 2, cfix)
-        print_ln('Results total %s.', total_count_sfix.reveal())
 
         for i in range(LOOKUP_SIZE + 1):
             # can't load_int into cfix in an Array
@@ -253,11 +241,9 @@ def main():
 
             count_sfix = sfix()
             count_sfix.load_int(accumulator[i][1])
-            # TODO getting random errors in div.
-            print_ln('Calc % div gives %s',
-                     (count_sfix / total_count_sfix).reveal())
             index_percent[i * 2 + 1] = (count_sfix / total_count_sfix).reveal()
 
+            # here for debug
             print_ln('Results entry %s: index %s % div %s.', i,
                      index_percent[i * 2], index_percent[i * 2 + 1])
 

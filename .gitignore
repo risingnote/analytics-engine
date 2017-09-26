@@ -61,3 +61,6 @@ spdz/Programs/Bytecode/*
 spdz/Programs/Schedules/*
 spdz/Programs/Public-Input/*
 spdz/Player-Data
+
+# Temp scratchpad experimental files
+scratchpad.*
