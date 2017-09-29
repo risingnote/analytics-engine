@@ -38,7 +38,7 @@ connectToSpdzProxy(
     const [connectedStatusStream, spdzResultStream, spdzErrorStream] = streams
     connectedStatusStream.onValue(status => {
       logger.debug(
-        `SPDZ combined connected status ${status.responseType} connected ${status.connected}.`
+        `SPDZ combined connected status ${status.eventType} connected ${status.status}.`
       )
     })
     spdzResultStream.onValue(valueList => {

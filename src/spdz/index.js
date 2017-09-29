@@ -21,12 +21,16 @@ const connectToSpdzProxy = (proxyConfig, clientDhKeyPair, analFuncs) => {
   spdzGuiLib.setDHKeyPair(clientDhKeyPair.publicKey, clientDhKeyPair.privateKey)
   const spdzProxyList = proxyConfig.spdzProxyList.map(spdzProxy => {
     return {
-      url: spdzProxy.url + proxyConfig.spdzApiRoot,
+      url: spdzProxy.url,
       encryptionKey: spdzGuiLib.createEncryptionKey(spdzProxy.publicKey)
     }
   })
 
   return spdzGuiLib.connectToSpdzProxyPromise(spdzProxyList, {})
+}
+
+const startSpdzProgram = (analyticFunc, force_start) => {
+  return spdzGuiLib.startSpdzProgramPromise(analyticFunc, force_start)
 }
 
 const connectToSpdzEngine = (reconnect = true) => {
@@ -83,4 +87,5 @@ module.exports.formatInput = formatInput
 module.exports.getFunction = getFunction
 module.exports.requestShares = requestShares
 module.exports.sendSecretInputs = sendSecretInputs
+module.exports.startSpdzProgram = startSpdzProgram
 module.exports.verifyQuery = verifyQuery
