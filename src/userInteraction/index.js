@@ -11,7 +11,7 @@ const {
   getFunction,
   requestShares,
   sendSecretInputs,
-  startSpdzProgram
+  runSpdzProgram
 } = require('../spdz')
 
 const STATUS = {
@@ -63,9 +63,13 @@ const runQuery = (socket, msg) => {
 
     // Request analytic function spdz program to be run
     // Don't wait on result here, later connectToSpdzEngine will work or not!
-    startSpdzProgram(analysisFunction.id, true).catch(err => {
-      logger.warn(err.message)
-    })
+    runSpdzProgram(analysisFunction.spdzPgm, true)
+      .then(() =>
+        logger.info(`SPDZ program ${analysisFunction.spdzPgm} started.`)
+      )
+      .catch(err => {
+        logger.warn(err.message)
+      })
 
     extractDbValues(msg.query, analysisFunction)
       .then(inputs => {

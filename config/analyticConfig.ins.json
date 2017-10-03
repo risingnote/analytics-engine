@@ -9,7 +9,8 @@
       },
       {
         "url": "http://localhost:3011",
-        "publicKey": "e39fcfc519fc5675f3b1bb076fe526e16bd091ff3bc081390aa1659ee822ad03"
+        "publicKey": "e39fcfc519fc5675f3b1bb076fe526e16bd091ff3bc081390aa1659ee822ad03",
+        "own": true
       }
     ]
   },
@@ -26,6 +27,7 @@
   "analysisFunctions": [
     {
       "id": "avg",
+      "spdzPgm": "analytics_avg",
       "name": "Average",
       "description": "Calculate avg as \u03A3 localSum / \u03A3 localCount.",
       "example": "select sum(col_1), count(col_1) \n  from table_name \n where col2 >1000",
@@ -56,6 +58,7 @@
     },
     {
       "id": "percentHour",
+      "spdzPgm": "distrib_percent",
       "name": "Percentage by hour",
       "description": "Percentage split of a summed value across hour.",
       "example": "select hour(incidentDate), count(*) \n  from table_name \n group by hour(incidentDate)",
@@ -91,6 +94,7 @@
     },
     {
       "id": "sumlookup",
+      "spdzPgm": "sumby_lookup",
       "name": "Sum by lookup",
       "description": "Sum of quantity grouped across lookup value. Party 2 supplies lookup value.",
       "example": "Party 1\nselect identifier, quantity\n \nParty 2\nselect identifier, lookupvalue",

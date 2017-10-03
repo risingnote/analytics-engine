@@ -11,7 +11,7 @@ const http = require('http')
 const webRouting = require('./webRouting')
 
 const db = require('./db')
-const { connectToSpdzProxy } = require('./spdz')
+const { connectToSpdzProxy, connectForSpdzBootstrap } = require('./spdz')
 const userInteraction = require('./userInteraction')
 // const simulateQuery = require('./userInteraction/simulateQuery')
 
@@ -21,13 +21,26 @@ const config = require(configLocation)
 
 const logger = require('./support/logging')
 
+/**
+ * Find the SPDZ proxy which is flagged as owned by this analytics engine.
+ */
+const getOwnSpdzProxy = proxyList => {
+  const ownProxy = proxyList.filter(
+    spdzProxy => spdzProxy.hasOwnProperty('own') && spdzProxy.own
+  )
+  if (ownProxy.length !== 1) {
+    throw Error('No own proxy found in config')
+  }
+  return ownProxy[0].url
+}
+
 logger.info('Starting analytics engine.')
 
 // At startup init database connection and get schema
 // Read only operation - rerunnable.
 db.initConnection(config.dbConfig)
 
-// At startup connect to SPDZ proxies
+// At startup connect to all SPDZ proxies via web sockets
 connectToSpdzProxy(
   config.spdzProxy,
   config.clientX25519,
@@ -51,7 +64,18 @@ connectToSpdzProxy(
     })
   })
   .catch(err => {
-    logger.warn(`Unable to connect to SPDZ proxies. ${err.message}.`)
+    logger.warn(`Unable to connect to SPDZ proxies. ${err.message}`)
+  })
+
+// At startup connect to the websocket to allow SPDZ programs to be run.
+connectForSpdzBootstrap(getOwnSpdzProxy(config.spdzProxy.spdzProxyList))
+  .then(() => {
+    logger.info('Connected successfully to SPDZ Proxy for bootstrapping.')
+  })
+  .catch(err => {
+    logger.warn(
+      `Unable to connect to SPDZ proxy for bootstrapping. ${err.message}`
+    )
   })
 
 // Serve client web requests

@@ -29,8 +29,11 @@ const connectToSpdzProxy = (proxyConfig, clientDhKeyPair, analFuncs) => {
   return spdzGuiLib.connectToSpdzProxyPromise(spdzProxyList, {})
 }
 
-const startSpdzProgram = (analyticFunc, force_start) => {
-  return spdzGuiLib.startSpdzProgramPromise(analyticFunc, force_start)
+const connectForSpdzBootstrap = ownSpdzUrl =>
+  spdzGuiLib.bootstrapConnectSetup(ownSpdzUrl)
+
+const runSpdzProgram = (analyticFunc, force_start) => {
+  return spdzGuiLib.runSpdzProgram(analyticFunc, force_start)
 }
 
 const connectToSpdzEngine = (reconnect = true) => {
@@ -74,18 +77,19 @@ const requestShares = number => {
 exitHook(() => {
   logger.info('Shutting down SPDZ connections...')
   spdzGuiLib
-    .disconnectFromSpdzPromise()
+    .disconnectFromSpdzPartyPromise()
     .then(() => logger.info('Disconnected from SPDZ.'))
     .catch(err =>
       logger.info('Problem in disconnecting from SPDZ.', err.message)
     )
 })
 
+module.exports.connectForSpdzBootstrap = connectForSpdzBootstrap
 module.exports.connectToSpdzEngine = connectToSpdzEngine
 module.exports.connectToSpdzProxy = connectToSpdzProxy
 module.exports.formatInput = formatInput
 module.exports.getFunction = getFunction
 module.exports.requestShares = requestShares
 module.exports.sendSecretInputs = sendSecretInputs
-module.exports.startSpdzProgram = startSpdzProgram
+module.exports.runSpdzProgram = runSpdzProgram
 module.exports.verifyQuery = verifyQuery
