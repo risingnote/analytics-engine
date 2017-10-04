@@ -105,56 +105,52 @@ def main():
 
     client_sockets = connectClients()
 
-    sfix.set_precision(10, 41)
-    cfix.set_precision(10, 41)
+    sfix.set_precision(20, 40)
+    cfix.set_precision(20, 40)
 
-    @do_while
-    def calc_loop():
-        print_ln('Starting a new avg calculation.')
+    print_ln('Starting avg calculation.')
 
-        # Clients secret input - sum and cnt.
-        accumulator = Array(2, sint)
-        accumulator.assign_all(0)
+    # Clients secret input - sum and cnt.
+    accumulator = Array(2, sint)
+    accumulator.assign_all(0)
 
-        for i in range(NUM_CLIENTS):
+    for i in range(NUM_CLIENTS):
 
-            @do_while
-            def batch_input():
-                shareCount = regint.read_from_socket(client_sockets[i])
-                print_ln('Requested %s shares.', shareCount)
+        @do_while
+        def batch_input():
+            shareCount = regint.read_from_socket(client_sockets[i])
+            print_ln('Requested %s shares.', shareCount)
 
-                input_share = sint.receive_from_client(
-                    MAX_NUM_INPUTS, client_sockets[i],
-                    ClientMessageType.TripleShares)
+            input_share = sint.receive_from_client(
+                MAX_NUM_INPUTS, client_sockets[i],
+                ClientMessageType.TripleShares)
 
-                print_ln('Batch input count %s', input_share[0].reveal())
+            print_ln('Batch input count %s', input_share[0].reveal())
 
-                accumulator[0] = accumulator[0] + input_share[1]
-                accumulator[1] = accumulator[1] + input_share[2]
+            accumulator[0] = accumulator[0] + input_share[1]
+            accumulator[1] = accumulator[1] + input_share[2]
 
-                print_ln('Current total %s count %s from clients.',
-                         accumulator[0].reveal(), accumulator[1].reveal())
+            print_ln('Current total %s count %s from clients.',
+                     accumulator[0].reveal(), accumulator[1].reveal())
 
-                return input_share[MAX_NUM_INPUTS - 1].reveal() == 0
+            return input_share[MAX_NUM_INPUTS - 1].reveal() == 0
 
-        # do calc
-        sum_float = sfix()
-        sum_float.load_int(accumulator[0])
-        cnt_float = sfix()
-        cnt_float.load_int(accumulator[1])
+    # do calc
+    sum_float = sfix()
+    sum_float.load_int(accumulator[0])
+    cnt_float = sfix()
+    cnt_float.load_int(accumulator[1])
 
-        results = Array(1, cfix)
-        sresult = sum_float / cnt_float
-        results[0] = sresult.reveal()
+    results = Array(1, cfix)
+    sresult = sum_float / cnt_float
+    results[0] = sresult.reveal()
 
-        print_ln('Total %s, count %s, avg %s.',
-                 sum_float.reveal(), cnt_float.reveal(), results[0])
+    print_ln('Total %s, count %s, avg %s.',
+             sum_float.reveal(), cnt_float.reveal(), results[0])
 
-        for i in range(NUM_CLIENTS):
-            cfix.write_to_socket(client_sockets[i], results,
-                                 ClientMessageType.ClearModpFix)
-
-        return 1
+    for i in range(NUM_CLIENTS):
+        cfix.write_to_socket(client_sockets[i], results,
+                             ClientMessageType.ClearModpFix)
 
 
 main()

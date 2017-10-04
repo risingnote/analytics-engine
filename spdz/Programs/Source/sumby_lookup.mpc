@@ -186,72 +186,67 @@ def main():
     sfix.set_precision(20, 40)
     cfix.set_precision(20, 40)
 
+    print_ln('Starting sum by lookup calculation.')
+
+    # Lookup data from client 0, identifier, lookup value
+    lookup_data = Matrix(LOOKUP_SIZE, 2, sint)
+    lookup_data.assign_all(0)
+
+    # Accumulated client 1 input - store lookup value, amount
+    # + 1 for storing unmatched lookups in last posn
+    accumulator = Matrix(LOOKUP_SIZE + 1, 2, sint)
+    accumulator.assign_all(0)
+
+    total_count = MemValue(sint(0))
+
+    # First client provides lookup data
+    # Block on user input, i.e. don't send shares until client requests.
+    shareCount = regint.read_from_socket(client_sockets[0])
+    print_ln('Lookup, requested %s shares.', shareCount)
+
+    lookup_input = sint.receive_from_client(MAX_NUM_LOOKUP, client_sockets[0],
+                                            ClientMessageType.TripleShares)
+
+    store_lookup(lookup_input[0], lookup_input[1:-1], lookup_data)
+
+    # Second client provides batched input
     @do_while
-    def calc_loop():
-        print_ln('Starting a new sum by lookup calculation.')
-
-        # Lookup data from client 0, identifier, lookup value
-        lookup_data = Matrix(LOOKUP_SIZE, 2, sint)
-        lookup_data.assign_all(0)
-
-        # Accumulated client 1 input - store lookup value, amount
-        # + 1 for storing unmatched lookups in last posn
-        accumulator = Matrix(LOOKUP_SIZE + 1, 2, sint)
-        accumulator.assign_all(0)
-
-        total_count = MemValue(sint(0))
-
-        # First client provides lookup data
+    def batch_input():
         # Block on user input, i.e. don't send shares until client requests.
-        shareCount = regint.read_from_socket(client_sockets[0])
-        print_ln('Lookup, requested %s shares.', shareCount)
+        shareCount = regint.read_from_socket(client_sockets[1])
+        print_ln('Input, requested %s shares.', shareCount)
 
-        lookup_input = sint.receive_from_client(
-            MAX_NUM_LOOKUP, client_sockets[0], ClientMessageType.TripleShares)
+        inputs = sint.receive_from_client(MAX_NUM_INPUTS, client_sockets[1],
+                                          ClientMessageType.TripleShares)
 
-        store_lookup(lookup_input[0], lookup_input[1:-1], lookup_data)
+        lookup_accumulate_inputs(inputs[0], inputs[1:-1], lookup_data,
+                                 accumulator, total_count)
 
-        # Second client provides batched input
-        @do_while
-        def batch_input():
-            # Block on user input, i.e. don't send shares until client requests.
-            shareCount = regint.read_from_socket(client_sockets[1])
-            print_ln('Input, requested %s shares.', shareCount)
+        return inputs[MAX_NUM_INPUTS - 1].reveal() == 0
 
-            inputs = sint.receive_from_client(MAX_NUM_INPUTS,
-                                              client_sockets[1],
-                                              ClientMessageType.TripleShares)
+    # populate index_percent as results (sint -> sfix, division, sfix -> cfix)
+    total_count_sfix = sfix()
+    total_count_sfix.load_int(total_count)
 
-            lookup_accumulate_inputs(inputs[0], inputs[1:-1], lookup_data,
-                                     accumulator, total_count)
+    index_percent = Array(LOOKUP_SIZE * 2 + 2, cfix)
 
-            return inputs[MAX_NUM_INPUTS - 1].reveal() == 0
+    for i in range(LOOKUP_SIZE + 1):
+        # can't load_int into cfix in an Array
+        index_cfix = cfix()
+        index_cfix.load_int(accumulator[i][0].reveal())
+        index_percent[i * 2] = index_cfix
 
-        # populate index_percent as results (sint -> sfix, division, sfix -> cfix)
-        total_count_sfix = sfix()
-        total_count_sfix.load_int(total_count)
+        count_sfix = sfix()
+        count_sfix.load_int(accumulator[i][1])
+        index_percent[i * 2 + 1] = (count_sfix / total_count_sfix).reveal()
 
-        index_percent = Array(LOOKUP_SIZE * 2 + 2, cfix)
+        # here for debug
+        print_ln('Results entry %s: index %s % div %s.', i,
+                 index_percent[i * 2], index_percent[i * 2 + 1])
 
-        for i in range(LOOKUP_SIZE + 1):
-            # can't load_int into cfix in an Array
-            index_cfix = cfix()
-            index_cfix.load_int(accumulator[i][0].reveal())
-            index_percent[i * 2] = index_cfix
-
-            count_sfix = sfix()
-            count_sfix.load_int(accumulator[i][1])
-            index_percent[i * 2 + 1] = (count_sfix / total_count_sfix).reveal()
-
-            # here for debug
-            print_ln('Results entry %s: index %s % div %s.', i,
-                     index_percent[i * 2], index_percent[i * 2 + 1])
-
-        for i in range(NUM_CLIENTS):
-            cfix.write_to_socket(client_sockets[i], index_percent,
-                                 ClientMessageType.ClearModpFix)
-
-        return 1
+    for i in range(NUM_CLIENTS):
+        cfix.write_to_socket(client_sockets[i], index_percent,
+                             ClientMessageType.ClearModpFix)
 
 
 main()
