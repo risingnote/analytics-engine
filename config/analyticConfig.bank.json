@@ -5,18 +5,22 @@
     "spdzProxyList": [
       {
         "url": "http://localhost:3010",
-        "publicKey": "9808b73811b3d0a638e07e4b363ad362d099fe02b4810729bbfd09ec1f82307b",
+        "publicKey":
+          "b979d4508acd90156353dee3f7de36608432eeba7b37bd363ca9427d4b684748",
         "own": true
       },
       {
         "url": "http://localhost:3011",
-        "publicKey": "e39fcfc519fc5675f3b1bb076fe526e16bd091ff3bc081390aa1659ee822ad03"
+        "publicKey":
+          "12b647fefff12afd58989420ba712cc07f717d7d31309fccc74804a78168de61"
       }
     ]
   },
   "clientX25519": {
-    "publicKey": "0ae03219cce4cfaaa30d014b92b41a106ff6dd039f0040504d02f18f1985d149",
-    "privateKey": "f08034611ab5c21221fca71a4da6591950710d8254f999271db9c2ec1a4aa655"
+    "publicKey":
+      "0ae03219cce4cfaaa30d014b92b41a106ff6dd039f0040504d02f18f1985d149",
+    "privateKey":
+      "f08034611ab5c21221fca71a4da6591950710d8254f999271db9c2ec1a4aa655"
   },
   "dbConfig": {
     "host": "localhost",
@@ -30,7 +34,8 @@
       "spdzPgm": "analytics_avg",
       "name": "Average",
       "description": "Calculate avg as \u03A3 localSum / \u03A3 localCount.",
-      "example": "select sum(col_1), count(col_1) \n  from table_name \n where col2 >1000",
+      "example":
+        "select sum(col_1), count(col_1) \n  from table_name \n where col2 >1000",
       "inputs": [
         {
           "name": "localSum",
@@ -61,7 +66,8 @@
       "spdzPgm": "distrib_percent",
       "name": "Percentage by hour",
       "description": "Percentage split of a summed value across hour.",
-      "example": "select hour(incidentDate), count(*) \n  from table_name \n group by hour(incidentDate)",
+      "example":
+        "select hour(incidentDate), count(*) \n  from table_name \n group by hour(incidentDate)",
       "inputs": [
         {
           "name": "xIndex",
@@ -96,8 +102,10 @@
       "id": "sumlookup",
       "spdzPgm": "sumby_lookup",
       "name": "Sum by lookup",
-      "description": "Sum of quantity grouped across lookup value. Party 1 supplies quantity.",
-      "example": "Party 1\nselect identifier, quantity\n  from table_name\n \nParty 2\nselect identifier, lookupvalue\n  from table_name",
+      "description":
+        "Sum of quantity grouped across lookup value. Party 1 supplies quantity.",
+      "example":
+        "Party 1\nselect identifier, quantity\n  from table_name\n \nParty 2\nselect identifier, lookupvalue\n  from table_name",
       "inputs": [
         {
           "name": "identifier",

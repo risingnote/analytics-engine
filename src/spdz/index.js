@@ -36,9 +36,32 @@ const runSpdzProgram = (analyticFunc, force_start) => {
   return spdzGuiLib.runSpdzProgram(analyticFunc, force_start)
 }
 
-const connectToSpdzEngine = (reconnect = true) => {
-  return spdzGuiLib.connectToSpdzPartyPromise(clientPublicKey, reconnect)
-}
+/**
+ * Because spdz process just started, we don't know when it is ready
+ * to accept SPDZ connections - plus if running in docker container
+ * socket connection works then immediately fails.
+ * Hence this horrible solution - really need a way of SPDZ confirming
+ * when it is ready to accept client connections.
+ * @param {Number} delayMs How long to wait to attempt connection.
+ * @param {Number} timeoutMs How long to wait for a connection once started.
+ * @param {boolean} reuseSpdzConnection If alredy connected to SPDZ reuse.
+ */
+const connectToSpdzEngineWithDelay = (
+  delayMs = 1000,
+  timeoutMs = 2100,
+  reuseSpdzConnection = false
+) =>
+  new Promise(resolve => {
+    setTimeout(() => {
+      resolve(
+        spdzGuiLib.connectToSpdzPartyPromise(
+          clientPublicKey,
+          timeoutMs,
+          reuseSpdzConnection
+        )
+      )
+    }, delayMs)
+  })
 
 const sendSecretInputs = inputList => {
   return spdzGuiLib.sendSecretInputsPromise(inputList)
@@ -85,7 +108,7 @@ exitHook(() => {
 })
 
 module.exports.connectForSpdzBootstrap = connectForSpdzBootstrap
-module.exports.connectToSpdzEngine = connectToSpdzEngine
+module.exports.connectToSpdzEngineWithDelay = connectToSpdzEngineWithDelay
 module.exports.connectToSpdzProxy = connectToSpdzProxy
 module.exports.formatInput = formatInput
 module.exports.getFunction = getFunction

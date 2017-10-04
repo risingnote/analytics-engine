@@ -26,9 +26,9 @@ COPY spdz/Programs/Source/analytics_avg.mpc Programs/Source
 COPY spdz/Programs/Source/distrib_percent.mpc Programs/Source
 COPY spdz/Programs/Source/sumby_lookup.mpc Programs/Source
 
-RUN ./compile.py $compilerArgs analytics_avg
-RUN ./compile.py $compilerArgs distrib_percent
-RUN ./compile.py $compilerArgs sumby_lookup
+RUN ./compile.py $compilerArgs analytics_avg \
+  && ./compile.py $compilerArgs distrib_percent \
+  && ./compile.py $compilerArgs sumby_lookup
 
 ENV playerId=0
 ENV basePort=13000

@@ -7,7 +7,7 @@ const logger = require('../support/logging')
 const Io = require('socket.io')
 const extractDbValues = require('./extractDbValues')
 const {
-  connectToSpdzEngine,
+  connectToSpdzEngineWithDelay,
   getFunction,
   requestShares,
   sendSecretInputs,
@@ -26,6 +26,7 @@ let ns = undefined
 // Manage concurrency here by storing socket that analytics engine is running a calculation for.
 // Undefined means engine is free for a new calculation.
 let busySocket = undefined
+let analysisFunction = undefined
 let dbValues = []
 let serverName = ''
 
@@ -40,7 +41,7 @@ const setBusySocket = socket => {
  * @param {Object} msg {query: 'string containing valid SQL', analyticFuncId id of analytic function to run} 
  */
 const runQuery = (socket, msg) => {
-  const analysisFunction = getFunction(msg.analyticFuncId)
+  analysisFunction = getFunction(msg.analyticFuncId)
 
   if (analysisFunction === undefined) {
     const errMsg = `Requested analytic function ${msg.analyticFuncId} is not found.`
@@ -61,16 +62,6 @@ const runQuery = (socket, msg) => {
   } else {
     setBusySocket(socket)
 
-    // Request analytic function spdz program to be run
-    // Don't wait on result here, later connectToSpdzEngine will work or not!
-    runSpdzProgram(analysisFunction.spdzPgm, true)
-      .then(() =>
-        logger.info(`SPDZ program ${analysisFunction.spdzPgm} started.`)
-      )
-      .catch(err => {
-        logger.warn(err.message)
-      })
-
     extractDbValues(msg.query, analysisFunction)
       .then(inputs => {
         dbValues = inputs
@@ -83,6 +74,7 @@ const runQuery = (socket, msg) => {
         })
       })
       .catch(err => {
+        analysisFunction = undefined
         dbValues = []
         const errMsg = `Problem runnng analytics query "${msg.query}". ${err.message}.`
         logger.debug(errMsg)
@@ -103,6 +95,7 @@ const runQuery = (socket, msg) => {
 const runQueryReset = socket => {
   if (busySocket !== undefined && busySocket.id === socket.id) {
     logger.debug('Client has requested query reset.')
+    analysisFunction = undefined
     dbValues = []
     setBusySocket(undefined)
   }
@@ -145,8 +138,28 @@ const goSpdz = socket => {
       status: STATUS.WARN,
       serverName: serverName
     })
+  } else if (analysisFunction === undefined) {
+    const errMsg =
+      'Unable to dispatch the analytics query to SPDZ. No analysis function selected.'
+    logger.debug(errMsg)
+    socket.emit('goSpdzResult', {
+      msg: errMsg,
+      status: STATUS.WARN,
+      serverName: serverName
+    })
   } else {
-    connectToSpdzEngine()
+    runSpdzProgram(analysisFunction.spdzPgm, true)
+      .then(() => {
+        const successMsg = `SPDZ program ${analysisFunction.spdzPgm} started.`
+        logger.info(successMsg)
+        socket.emit('goSpdzResult', {
+          msg: successMsg,
+          status: STATUS.INFO,
+          serverName: serverName
+        })
+
+        return connectToSpdzEngineWithDelay(1000)
+      })
       .then(() => {
         return sendInputDataInBatches(dbValues, dataChunk =>
           requestShares(dataChunk.length).then(() => {
@@ -155,6 +168,7 @@ const goSpdz = socket => {
         )
       })
       .then(() => {
+        analysisFunction === undefined
         dbValues = []
         const successMsg = 'Succesfully sent analytics query to SPDZ.'
         logger.debug(successMsg)
@@ -165,9 +179,10 @@ const goSpdz = socket => {
         })
       })
       .catch(err => {
+        analysisFunction === undefined
         dbValues = []
         const errMsg = `Unable to send analytics query to SPDZ. ${err.message}`
-        logger.debug(errMsg)
+        logger.warn(errMsg)
         socket.emit('goSpdzResult', {
           msg: errMsg,
           status: STATUS.ERROR,
@@ -185,6 +200,7 @@ const goSpdz = socket => {
  */
 const disconnect = socket => {
   if (busySocket !== undefined && busySocket.id === socket.id) {
+    analysisFunction === undefined
     dbValues = []
     setBusySocket(undefined)
     logger.debug('Socket disconnecting, clearing DB query.')
