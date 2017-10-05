@@ -89,15 +89,61 @@ const runQuery = (socket, msg) => {
 }
 
 /**
- * Client has requested reset after running query, most likely the other engine query failed.
+ * Client has requested reset after one of the parties reported an error.
  * @param {socket} socket 
  */
-const runQueryReset = socket => {
+const runReset = socket => {
   if (busySocket !== undefined && busySocket.id === socket.id) {
     logger.debug('Client has requested query reset.')
     analysisFunction = undefined
     dbValues = []
     setBusySocket(undefined)
+  }
+}
+
+/**
+ * Client has instructed SPDZ engines to be started for specified analytic query.
+ */
+const runSpdz = socket => {
+  if (busySocket === undefined || busySocket.id !== socket.id) {
+    const errMsg = 'Unable to run SPDZ program. You are not the active query.'
+    logger.debug(errMsg)
+    socket.emit('runSpdzResult', {
+      msg: errMsg,
+      status: STATUS.WARN,
+      serverName: serverName
+    })
+  } else if (analysisFunction === undefined) {
+    const errMsg = 'Unable to run SPDZ program. No analysis function selected.'
+    logger.debug(errMsg)
+    socket.emit('runSpdzResult', {
+      msg: errMsg,
+      status: STATUS.WARN,
+      serverName: serverName
+    })
+  } else {
+    runSpdzProgram(analysisFunction.spdzPgm, true)
+      .then(() => {
+        const successMsg = `SPDZ program ${analysisFunction.spdzPgm} started.`
+        logger.debug(successMsg)
+        socket.emit('runSpdzResult', {
+          msg: successMsg,
+          status: STATUS.INFO,
+          serverName: serverName
+        })
+      })
+      .catch(err => {
+        analysisFunction === undefined
+        dbValues = []
+        const errMsg = `Unable to run SPDZ program. ${err.message}`
+        logger.warn(errMsg)
+        socket.emit('runSpdzResult', {
+          msg: errMsg,
+          status: STATUS.ERROR,
+          serverName: serverName
+        })
+        setBusySocket(undefined)
+      })
   }
 }
 
@@ -148,18 +194,7 @@ const goSpdz = socket => {
       serverName: serverName
     })
   } else {
-    runSpdzProgram(analysisFunction.spdzPgm, true)
-      .then(() => {
-        const successMsg = `SPDZ program ${analysisFunction.spdzPgm} started.`
-        logger.info(successMsg)
-        socket.emit('goSpdzResult', {
-          msg: successMsg,
-          status: STATUS.INFO,
-          serverName: serverName
-        })
-
-        return connectToSpdzEngineWithDelay(1000)
-      })
+    connectToSpdzEngineWithDelay(1000)
       .then(() => {
         return sendInputDataInBatches(dbValues, dataChunk =>
           requestShares(dataChunk.length).then(() => {
@@ -234,12 +269,16 @@ const init = (httpServer, friendlyName) => {
       runQuery(socket, msg)
     })
 
-    socket.on('runQueryReset', () => {
-      runQueryReset(socket)
+    socket.on('runSpdz', () => {
+      runSpdz(socket)
     })
 
     socket.on('goSpdz', () => {
       goSpdz(socket)
+    })
+
+    socket.on('runReset', () => {
+      runReset(socket)
     })
 
     socket.once('disconnect', () => {
