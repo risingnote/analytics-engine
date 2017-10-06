@@ -76,12 +76,12 @@ create algorithm = temptable
   sql security definer
  view v_attribution as select * from cyberAttribution;
 
-drop user if exists 'spdzuser_ins'@'172.17.0.%' ;
-create user 'spdzuser_ins'@'172.17.0.%' 
+drop user if exists 'spdzuser_ins'@'172.0.0.0/255.0.0.0' ;
+create user 'spdzuser_ins'@'172.0.0.0/255.0.0.0' 
  identified by 'inspassword' password expire never;
 
-grant select on v_salary to 'spdzuser_ins'@'172.17.0.%' ;
-grant select on v_cyberFraud to 'spdzuser_ins'@'172.17.0.%' ;
-grant select on v_attribution to 'spdzuser_ins'@'172.17.0.%' ;
+grant select on v_salary to 'spdzuser_ins'@'172.0.0.0/255.0.0.0' ;
+grant select on v_cyberFraud to 'spdzuser_ins'@'172.0.0.0/255.0.0.0' ;
+grant select on v_attribution to 'spdzuser_ins'@'172.0.0.0/255.0.0.0' ;
 
 commit;

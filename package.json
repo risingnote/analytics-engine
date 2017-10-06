@@ -40,7 +40,7 @@
     "moment": "^2.18.1",
     "mysql": "^2.13.0",
     "socket.io": "^2.0.3",
-    "spdz-gui-lib": "file:///Users/je0018/Development/spdz-gui-lib",
+    "spdz-gui-lib": "git+ssh://git@github.com/bristolcrypto/spdz-gui-lib.git#v0.3.1",
     "winston": "^2.3.1"
   }
 }

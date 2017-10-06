@@ -103,14 +103,14 @@ create algorithm = temptable
  sql security definer
  view v_cyberFraud as select * from cyberFraud;
 
-drop user if exists 'spdzuser_bank'@'172.17.0.%' ;
-create user 'spdzuser_bank'@'172.17.0.%' 
+drop user if exists 'spdzuser_bank'@'172.0.0.0/255.0.0.0' ;
+create user 'spdzuser_bank'@'172.0.0.0/255.0.0.0' 
  identified by 'bankpassword' password expire never;
 
 
-grant select on v_salary to 'spdzuser_bank'@'172.17.0.%' ;
+grant select on v_salary to 'spdzuser_bank'@'172.0.0.0/255.0.0.0' ;
 
-grant select on v_cyberFraud to 'spdzuser_bank'@'172.17.0.%' ;
+grant select on v_cyberFraud to 'spdzuser_bank'@'172.0.0.0/255.0.0.0' ;
 
 commit;
 

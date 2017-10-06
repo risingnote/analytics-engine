@@ -1,0 +1,140 @@
+{
+  "friendlyName": "acmeinsurance",
+  "spdzProxy": {
+    "spdzApiRoot": "/spdzapi",
+    "spdzProxyList": [
+      {
+        "url": "http://spdz-proxy-0:8080",
+        "publicKey":
+          "b979d4508acd90156353dee3f7de36608432eeba7b37bd363ca9427d4b684748"
+      },
+      {
+        "url": "http://spdz-proxy-1:8080",
+        "publicKey":
+          "12b647fefff12afd58989420ba712cc07f717d7d31309fccc74804a78168de61",
+        "own": true
+      }
+    ]
+  },
+  "clientX25519": {
+    "publicKey":
+      "242584f87e218f54299bfd1ecef97884f715f14305a5d05f78afb9bb92c7bc54",
+    "privateKey":
+      "05526e1228e49f78f61345786ac4b059014426c752129e67eeca0db7fafb103a"
+  },
+  "dbConfig": {
+    "host": "mysqlDev",
+    "user": "spdzuser_ins",
+    "password": "inspassword",
+    "database": "acmeinsurance"
+  },
+  "analysisFunctions": [
+    {
+      "id": "avg",
+      "spdzPgm": "analytics_avg",
+      "name": "Average",
+      "description": "Calculate avg as \u03A3 localSum / \u03A3 localCount.",
+      "example":
+        "select sum(col_1), count(col_1) \n  from table_name \n where col2 >1000",
+      "inputs": [
+        {
+          "name": "localSum",
+          "type": "int",
+          "byteSize": 4
+        },
+        {
+          "name": "localCount",
+          "type": "int",
+          "byteSize": 4
+        }
+      ],
+      "inputRowCount": {
+        "rowBufferSize": 1,
+        "batched": false
+      },
+      "outputs": [
+        {
+          "name": "result",
+          "type": "float",
+          "byteSize": 16
+        }
+      ],
+      "outputRowCount": 1
+    },
+    {
+      "id": "percentHour",
+      "spdzPgm": "distrib_percent",
+      "name": "Percentage by hour",
+      "description": "Percentage split of a summed value across hour.",
+      "example":
+        "select hour(incidentDate), count(*) \n  from table_name \n group by hour(incidentDate)",
+      "inputs": [
+        {
+          "name": "xIndex",
+          "type": "int",
+          "byteSize": 4
+        },
+        {
+          "name": "yCount",
+          "type": "int",
+          "byteSize": 4
+        }
+      ],
+      "inputRowCount": {
+        "rowBufferSize": 24,
+        "batched": false
+      },
+      "outputs": [
+        {
+          "name": "xIndex",
+          "type": "float",
+          "byteSize": 16
+        },
+        {
+          "name": "yPercent",
+          "type": "float",
+          "byteSize": 16
+        }
+      ],
+      "outputRowCount": 24
+    },
+    {
+      "id": "sumlookup",
+      "spdzPgm": "sumby_lookup",
+      "name": "Sum by lookup",
+      "description":
+        "Sum of quantity grouped across lookup value. Party 2 supplies lookup value.",
+      "example":
+        "Party 1\nselect identifier, quantity\n \nParty 2\nselect identifier, lookupvalue",
+      "inputs": [
+        {
+          "name": "identifier",
+          "type": "int",
+          "byteSize": 4
+        },
+        {
+          "name": "xLookupValue",
+          "type": "int",
+          "byteSize": 4
+        }
+      ],
+      "inputRowCount": {
+        "rowBufferSize": 30,
+        "batched": false
+      },
+      "outputs": [
+        {
+          "name": "xLookupValue",
+          "type": "float",
+          "byteSize": 16
+        },
+        {
+          "name": "y%Quantity",
+          "type": "float",
+          "byteSize": 16
+        }
+      ],
+      "outputRowCount": 31
+    }
+  ]
+}

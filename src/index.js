@@ -16,7 +16,7 @@ const userInteraction = require('./userInteraction')
 // const simulateQuery = require('./userInteraction/simulateQuery')
 
 // Runtime config
-const configLocation = process.env.CONFIG_FILE || '../config/analyticConfig'
+const configLocation = process.env.CONFIG_LOCATION || '../config/analyticConfig'
 const config = require(configLocation)
 
 const logger = require('./support/logging')
