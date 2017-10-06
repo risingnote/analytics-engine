@@ -1,4 +1,4 @@
-FROM spdz/spdz:snapshot
+FROM spdz/spdz:v0.4.1-analytics-engine
 
 # Compile the analytics mpc programs into a container and setup to be able to start a selected program.
 # Note this version of SPDZ does not rely on the server.x coordination startup program.
@@ -14,7 +14,7 @@ FROM spdz/spdz:snapshot
 
 
 LABEL name="SPDZ MPC Analytics" \
-  description="Defines compiled analytics functions for use with analytics-engine." \
+  description="Compile analytics functions for use with analytics-engine." \
   maintainer="Jonathan Evans <jon.evans@bristol.ac.uk>" \
   license="University of Bristol : Open Access Software Licence" 
 
