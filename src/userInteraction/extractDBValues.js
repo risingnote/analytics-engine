@@ -8,7 +8,7 @@ const spdz = require('../spdz')
  * 
  * @returns {Array<Array>} array of input data arrays to support batching inputs
  */
-const extractDBValues = (query, analyticFunc) => {
+const extractDbValues = (query, analyticFunc) => {
   return db
     .runQuery(query)
     .then(data => {
@@ -33,4 +33,4 @@ const extractDBValues = (query, analyticFunc) => {
     })
 }
 
-module.exports = extractDBValues
+module.exports = extractDbValues
