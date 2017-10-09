@@ -28,4 +28,4 @@ echo "=================================================="
 echo "Build docker image at version $PACKAGE_VERSION...."
 echo "=================================================="
   
-docker build -t spdz/workshop-voting-gui:v$PACKAGE_VERSION .
+docker build -t spdz/analytics-engine:v$PACKAGE_VERSION .
