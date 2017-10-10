@@ -6,12 +6,12 @@
       {
         "url": "http://localhost:3010",
         "publicKey":
-          "b979d4508acd90156353dee3f7de36608432eeba7b37bd363ca9427d4b684748"
+          "9808b73811b3d0a638e07e4b363ad362d099fe02b4810729bbfd09ec1f82307b"
       },
       {
         "url": "http://localhost:3011",
         "publicKey":
-          "12b647fefff12afd58989420ba712cc07f717d7d31309fccc74804a78168de61",
+          "e39fcfc519fc5675f3b1bb076fe526e16bd091ff3bc081390aa1659ee822ad03",
         "own": true
       }
     ]

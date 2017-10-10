@@ -119,7 +119,7 @@ def accumulate_inputs(slength, inputs, index_count, total_count):
             def loop_body(k):
                 is_match = inputs[j] == index_count[k][0]
                 matchIndex[0] = if_else(is_match, k, matchIndex[0])
-                is_empty = sint(0) == index_count[k][0]
+                is_empty = sint(-1) == index_count[k][0]
                 emptyIndex[0] = if_else(is_empty, k, emptyIndex[0])
 
             match_index = regint(matchIndex[0].reveal())
@@ -161,7 +161,11 @@ def main():
 
     # Clients secret input - index and cnt for each row
     index_count = Matrix(INDEX_SIZE, 2, sint)
-    index_count.assign_all(0)
+
+    @for_range(INDEX_SIZE)
+    def init_body(i):
+        index_count[i][0] = MemValue(-1)
+        index_count[i][1] = MemValue(0)
 
     total_count = MemValue(sint(0))
 

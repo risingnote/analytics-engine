@@ -7,7 +7,7 @@ if ! test -e $PROXYROOT/logs; then
     mkdir $PROXYROOT/logs
 fi
 
-NODE_ENV=development LOG_LEVEL=debug CONFIG_LOCATION='../analyticConfig.bank' HTTP_PORT=3020 node src/index.js > $PROXYROOT/logs/analytics_bank.log 2>&1 &
+NODE_ENV=development LOG_LEVEL=debug CONFIG_LOCATION='../config/analyticConfig.bank' HTTP_PORT=3020 node src/index.js > $PROXYROOT/logs/analytics_bank.log 2>&1 &
 echo $! > $PROXYROOT/logs/analytics_bank.pid
 echo "Started analytics engine for acme bank, pid $!."
 
