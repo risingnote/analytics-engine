@@ -28,8 +28,26 @@ create table cyberFraud (
   ipAddress int unsigned null,
   incidentDate datetime not null
   ); 
+  
+drop procedure if exists `insert_bulk_cyberfraud_data`;
 
-# Sample data
+delimiter //
+CREATE DEFINER=`root`@`%` PROCEDURE `insert_bulk_cyberfraud_data`(IN rowCount int, IN ipAddress varchar(15))
+BEGIN
+    DECLARE i int DEFAULT 0;
+    WHILE i < rowCount DO
+
+		insert into acmebank.cyberFraud() 
+			values(null, FLOOR(RAND() * 100), 
+						inet_aton(ipAddress),
+						date_format('2016-06-06', '%Y-%m-%d'));
+    
+        SET i = i + 1;
+    END WHILE;
+END //
+delimiter ;
+
+# Sample data (2017) hand crafted
 insert into cyberFraud() values(null, '32', inet_aton('100.200.127.4'), date_format('2017-01-18 15:22:03', '%Y-%m-%d %H:%i:%S'));
 insert into cyberFraud() values(null, '25', inet_aton('100.200.127.5'), date_format('2017-01-18 20:22:03', '%Y-%m-%d %H:%i:%S'));
 insert into cyberFraud() values(null, '16', inet_aton('100.200.127.5'), date_format('2017-01-18 19:22:03', '%Y-%m-%d %H:%i:%S'));
@@ -87,6 +105,14 @@ insert into cyberFraud() values(null, '88', inet_aton('200.200.127.5'), date_for
 insert into cyberFraud() values(null, '99', inet_aton('64.63.87.112'), date_format('2017-02-21 04:22:03', '%Y-%m-%d %H:%i:%S'));
 insert into cyberFraud() values(null, '23', inet_aton('64.63.87.113'), date_format('2017-02-21 04:25:25', '%Y-%m-%d %H:%i:%S'));
 
+# Sample data (2016) bulk
+call insert_bulk_cyberfraud_data(100, '100.200.127.5');
+call insert_bulk_cyberfraud_data(100, '100.200.127.7');
+call insert_bulk_cyberfraud_data(100, '100.200.127.8');
+call insert_bulk_cyberfraud_data(100, '200.200.127.2');
+call insert_bulk_cyberfraud_data(100, '200.200.127.4');
+call insert_bulk_cyberfraud_data(100, '200.200.127.5');
+call insert_bulk_cyberfraud_data(100, '99.99.99.99');
 
 #=================================================================
 # Schema to hold read only views, access from analytics engine.
