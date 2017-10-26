@@ -2,7 +2,9 @@
  * SPDZ interactions.
  */
 const assert = require('assert')
-const spdzGuiLib = require('spdz-gui-lib')
+const crypto = require('spdz-gui-lib/dist/crypto')
+const spdzProxyClient = require('spdz-gui-lib/dist/socket_api')
+const spdzBootstrap = require('spdz-gui-lib/dist/bootstrap_api')
 const formatInput = require('./formatInput')
 
 const exitHook = require('../support/exitHook')
@@ -18,22 +20,22 @@ const getFunction = funcId => {
 const connectToSpdzProxy = (proxyConfig, clientDhKeyPair, analFuncs) => {
   funcDefinitions = analFuncs
   clientPublicKey = clientDhKeyPair.publicKey
-  spdzGuiLib.setDHKeyPair(clientDhKeyPair.publicKey, clientDhKeyPair.privateKey)
+  crypto.setDHKeyPair(clientDhKeyPair.publicKey, clientDhKeyPair.privateKey)
   const spdzProxyList = proxyConfig.spdzProxyList.map(spdzProxy => {
     return {
       url: spdzProxy.url,
-      encryptionKey: spdzGuiLib.createEncryptionKey(spdzProxy.publicKey)
+      encryptionKey: crypto.createEncryptionKey(spdzProxy.publicKey)
     }
   })
 
-  return spdzGuiLib.connectToSpdzProxyPromise(spdzProxyList, {})
+  return spdzProxyClient.connectToSpdzProxyPromise(spdzProxyList, {})
 }
 
 const connectForSpdzBootstrap = ownSpdzUrl =>
-  spdzGuiLib.bootstrapConnectSetup(ownSpdzUrl)
+  spdzBootstrap.bootstrapConnectSetup(ownSpdzUrl)
 
 const runSpdzProgram = (analyticFunc, force_start) => {
-  return spdzGuiLib.runSpdzProgram(analyticFunc, force_start)
+  return spdzBootstrap.runSpdzProgram(analyticFunc, force_start)
 }
 
 /**
@@ -44,27 +46,18 @@ const runSpdzProgram = (analyticFunc, force_start) => {
  * when it is ready to accept client connections.
  * @param {Number} delayMs How long to wait to attempt connection.
  * @param {Number} timeoutMs How long to wait for a connection once started.
- * @param {boolean} reuseSpdzConnection If alredy connected to SPDZ reuse.
  */
-const connectToSpdzEngineWithDelay = (
-  delayMs = 1000,
-  timeoutMs = 2100,
-  reuseSpdzConnection = false
-) =>
+const connectToSpdzEngineWithDelay = (delayMs = 1000, timeoutMs = 2100) =>
   new Promise(resolve => {
     setTimeout(() => {
       resolve(
-        spdzGuiLib.connectToSpdzPartyPromise(
-          clientPublicKey,
-          timeoutMs,
-          reuseSpdzConnection
-        )
+        spdzProxyClient.connectToSpdzPartyPromise(clientPublicKey, timeoutMs)
       )
     }, delayMs)
   })
 
 const sendSecretInputs = inputList => {
-  return spdzGuiLib.sendSecretInputsPromise(inputList)
+  return spdzProxyClient.sendSecretInputsPromise(inputList)
 }
 
 /**
@@ -94,12 +87,12 @@ const verifyQuery = (colCount, rowCount, analyticFunction) => {
 }
 
 const requestShares = number => {
-  return spdzGuiLib.sendClearInputsPromise([number])
+  return spdzProxyClient.sendClearInputsPromise([number])
 }
 
 exitHook(() => {
   logger.info('Shutting down SPDZ connections...')
-  spdzGuiLib
+  spdzProxyClient
     .disconnectFromSpdzPartyPromise()
     .then(() => logger.info('Disconnected from SPDZ.'))
     .catch(err =>
