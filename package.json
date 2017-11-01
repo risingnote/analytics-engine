@@ -1,8 +1,7 @@
 {
   "name": "analytics-engine",
-  "version": "0.1.1",
-  "description":
-    "Intermediary between browser client, relational database and SPDZ engine.",
+  "version": "0.2.0",
+  "description": "Intermediary between browser client, relational database and SPDZ engine.",
   "main": "src/index.js",
   "scripts": {
     "test": "jest --onlyChanged --watch",
@@ -12,7 +11,12 @@
     "type": "git",
     "url": "git+https://github.com/bristolcrypto/analytics-engine.git"
   },
-  "keywords": ["spdz", "uob", "analytics", "demonstrators"],
+  "keywords": [
+    "spdz",
+    "uob",
+    "analytics",
+    "demonstrators"
+  ],
   "author": "Jonathan Evans",
   "license": "SEE LICENSE IN License.txt",
   "bugs": {
@@ -36,8 +40,7 @@
     "moment": "^2.18.1",
     "mysql": "^2.13.0",
     "socket.io": "^2.0.3",
-    "spdz-gui-lib":
-      "git+ssh://git@github.com/bristolcrypto/spdz-gui-lib.git#v0.3.1",
+    "spdz-gui-lib": "git+ssh://git@github.com/bristolcrypto/spdz-gui-lib.git#v0.4.0",
     "winston": "^2.3.1"
   }
 }
